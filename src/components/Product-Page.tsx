@@ -5,10 +5,14 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/context/cart-context';
 import { useToast } from '@/hooks/use-toast';
-import type { Product } from '@/lib/products';
+import { type Product, products } from '@/lib/products';
 import { ShoppingCart, Star } from 'lucide-react';
 
-export default function ProductPageClient({ product }: { product: Product }) {
+// For this example, we'll just use the first product.
+// A real app would use dynamic routing to fetch a specific product.
+const product = products[0];
+
+export default function ProductPageClient() {
   const { addToCart } = useCart();
   const { toast } = useToast();
 
