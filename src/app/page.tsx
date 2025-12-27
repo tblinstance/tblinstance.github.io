@@ -6,6 +6,7 @@ import PricingCard from '@/components/PricingCard';
 import { useCart } from '@/context/cart-context';
 import { useToast } from '@/hooks/use-toast';
 import type { Product } from '@/lib/products';
+import { products } from '@/lib/products';
 import { Cpu, MemoryStick, HardDrive, Server, Globe, Users, Database, ArrowRightLeft, Box, Layers, Terminal, CloudCog } from "lucide-react";
 
 
@@ -14,15 +15,13 @@ export default function Home() {
   const { addToCart } = useCart();
 
   const handleAddToCart = (planName: string, price: number) => {
-    // We need a unique-ish ID. A real app would have proper product IDs.
-    const productId = new Date().getTime() + Math.random();
-    
+    // We create a product object that matches the cart's expected structure.
+    // In a real app, these would have unique IDs and dedicated images.
     const product: Product = {
-      id: productId,
+      id: new Date().getTime(), // simple unique ID for example purposes
       name: planName,
       price: price,
-      // The cart expects an image, so we'll use a generic placeholder.
-      imageUrl: 'https://picsum.photos/seed/hosting/600/400',
+      imageUrl: 'https://picsum.photos/seed/hosting/400/400',
       imageHint: 'server cloud',
       description: `Hosting plan: ${planName}`,
     };
@@ -529,5 +528,3 @@ export default function Home() {
     </div>
   );
 }
-
-    

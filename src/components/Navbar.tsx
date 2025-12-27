@@ -24,6 +24,9 @@ export default function Navbar() {
           <span>tblinc</span>
         </Link>
         <div className="flex items-center gap-4">
+            <Button variant="ghost" asChild>
+                <Link href="/product">Product</Link>
+            </Button>
             <Link href="/checkout" className="relative">
                 <Button variant="ghost" size="icon">
                     <ShoppingCart className="h-5 w-5" />
