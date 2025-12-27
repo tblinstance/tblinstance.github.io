@@ -1,0 +1,22 @@
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users can read and write all documents and subcollections under their own user ID.
+    match /users/{userId}/{documents=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Products can be read by anyone, but not written to by clients.
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if false; 
+    }
+    
+    // Each user can read and write to their own cart document.
+    match /carts/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
