@@ -15,9 +15,11 @@ export default function Home() {
   const { addToCart } = useCart();
 
   const handleAddToCart = (planName: string, price: number) => {
-    // We create a product object that matches the cart's expected structure.
+    // We find a matching product or create a new one.
     // In a real app, these would have unique IDs and dedicated images.
-    const product: Product = {
+    const existingProduct = products.find(p => p.name === planName);
+    
+    const product: Product = existingProduct || {
       id: new Date().getTime(), // simple unique ID for example purposes
       name: planName,
       price: price,
