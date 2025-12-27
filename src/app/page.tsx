@@ -1,7 +1,6 @@
 
 "use client";
 
-import Navbar from '@/components/Navbar';
 import PricingCard from '@/components/PricingCard';
 import { useCart } from '@/context/cart-context';
 import { useToast } from '@/hooks/use-toast';
@@ -380,8 +379,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="bg-background text-foreground">
-      <Navbar />
+    <>
       <main className="container mx-auto px-4 md:px-6 py-24">
         <div className="grid gap-24">
             <section id="vps-plans">
@@ -527,6 +525,6 @@ export default function Home() {
             </p>
         </div>
       </footer>
-    </div>
+    </>
   );
 }

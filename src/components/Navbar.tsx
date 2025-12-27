@@ -21,7 +21,7 @@ export default function Navbar() {
           <div className="p-2 bg-primary rounded-lg">
             <Zap className="h-5 w-5 text-primary-foreground" />
           </div>
-          <span>tblinc</span>
+          <span>AuthFlow</span>
         </Link>
         <div className="flex items-center gap-4">
             <Button variant="ghost" asChild>

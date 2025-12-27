@@ -1,10 +1,15 @@
 
+"use client"
+
 import type { Metadata } from 'next';
+import { usePathname } from 'next/navigation';
 import { AuthProvider } from '@/context/auth-context';
 import { CartProvider } from '@/context/cart-context';
 import { Toaster } from '@/components/ui/toaster';
+import Navbar from '@/components/Navbar';
 import './globals.css';
 
+// Metadata can still be exported from a client component in the root layout
 export const metadata: Metadata = {
   title: 'AuthFlow',
   description: 'Seamless Authentication with Firebase and Next.js',
@@ -15,6 +20,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const pathname = usePathname();
+  const showNavbar = !['/login', '/signup', '/forgot-password'].includes(pathname);
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -25,8 +33,11 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <AuthProvider>
             <CartProvider>
-                {children}
-                <Toaster />
+                <div className="bg-background text-foreground min-h-screen">
+                  {showNavbar && <Navbar />}
+                  {children}
+                  <Toaster />
+                </div>
             </CartProvider>
         </AuthProvider>
       </body>

@@ -5,7 +5,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useCart } from '@/context/cart-context';
 import { Button } from '@/components/ui/button';
-import Navbar from '@/components/Navbar';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Separator } from '@/components/ui/separator';
 import { PlusCircle, MinusCircle, Trash2, ShoppingCart, ShieldCheck, Loader2 } from 'lucide-react';
@@ -132,8 +131,6 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="bg-background text-foreground min-h-screen">
-      <Navbar />
       <main className="container mx-auto px-4 md:px-6 py-24">
         <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold font-sans">Shopping Cart</h1>
@@ -218,6 +215,5 @@ export default function CheckoutPage() {
           </div>
         )}
       </main>
-    </div>
   );
 }
