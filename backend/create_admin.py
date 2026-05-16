@@ -13,6 +13,8 @@ user, created = User.objects.get_or_create(email=email)
 user.set_password(password)
 user.is_staff = True
 user.is_superuser = True
+user.is_approved = True
+user.is_active = True
 user.save()
 
 if created:
