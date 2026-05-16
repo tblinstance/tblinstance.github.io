@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useAppStore } from '../store/AppStore';
 
 export function PublicNavbar() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { theme, toggleTheme, language, toggleLanguage, setShowAuth, setIsLogin, setActiveTab, activeTab } = useAppStore();
 
   const t = {
@@ -199,28 +201,84 @@ export function PublicNavbar() {
       <div className="flex items-center gap-2 md:gap-3 shrink-0">
         <button
           onClick={toggleTheme}
-          className="w-9 h-9 rounded-xl bg-[var(--primary-transparent)] border border-[var(--primary-transparent-border)] text-[var(--primary)] flex items-center justify-center hover:bg-[var(--primary-transparent-hover)] transition-colors"
+          className="hidden md:flex w-9 h-9 rounded-xl bg-[var(--primary-transparent)] border border-[var(--primary-transparent-border)] text-[var(--primary)] items-center justify-center hover:bg-[var(--primary-transparent-hover)] transition-colors"
         >
           <span className="icon text-lg">{theme === 'dark' ? 'light_mode' : 'dark_mode'}</span>
         </button>
 
         <button
           onClick={toggleLanguage}
-          className="w-9 h-9 rounded-xl bg-[var(--primary-transparent)] border border-[var(--primary-transparent-border)] text-[var(--primary)] flex items-center justify-center hover:bg-[var(--primary-transparent-hover)] transition-colors text-xs font-black tracking-widest"
+          className="hidden md:flex w-9 h-9 rounded-xl bg-[var(--primary-transparent)] border border-[var(--primary-transparent-border)] text-[var(--primary)] items-center justify-center hover:bg-[var(--primary-transparent-hover)] transition-colors text-xs font-black tracking-widest"
         >
           {language === 'en' ? 'BN' : 'EN'}
         </button>
 
         {/* Divider slit */}
-        <div className="w-[1px] h-6 bg-[var(--border)] shrink-0" />
+        <div className="hidden md:block w-[1px] h-6 bg-[var(--border)] shrink-0" />
 
-        <button onClick={() => { setIsLogin(true); setShowAuth(true); }} className="btn btn-ghost px-3 py-2 md:px-5 md:py-2.5">
+        <button onClick={() => { setIsLogin(true); setShowAuth(true); }} className="hidden sm:flex btn btn-ghost px-3 py-2 md:px-5 md:py-2.5">
           {t.login}
         </button>
-        <button onClick={() => { setIsLogin(false); setShowAuth(true); }} className="btn btn-primary px-4 py-2 md:px-6 md:py-2.5 shadow-lg shadow-[var(--primary-transparent)] hover:-translate-y-[1px]">
+        <button onClick={() => { setIsLogin(false); setShowAuth(true); }} className="btn btn-primary px-3 py-1.5 text-xs md:text-sm md:px-6 md:py-2.5 shadow-lg shadow-[var(--primary-transparent)] hover:-translate-y-[1px]">
           {t.signup}
         </button>
+
+        {/* Mobile Menu Toggle */}
+        <button 
+          className="lg:hidden w-9 h-9 rounded-xl bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text-main)] flex items-center justify-center"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        >
+          <span className="icon">{mobileMenuOpen ? 'close' : 'menu'}</span>
+        </button>
       </div>
+
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div className="lg:hidden fixed inset-0 top-[60px] md:top-[72px] bg-[var(--bg)] z-[150] overflow-y-auto p-5 animate-fade-in flex flex-col">
+          <div className="flex-1 space-y-2">
+            <button 
+              onClick={() => { setActiveTab('products'); setMobileMenuOpen(false); }}
+              className={`w-full text-left p-4 rounded-xl font-bold ${activeTab === 'products' ? 'bg-[var(--primary-transparent)] text-[var(--primary)]' : 'bg-[var(--surface)] text-[var(--text-main)]'}`}
+            >
+              {t.products}
+            </button>
+            <button 
+              onClick={() => { setActiveTab('solutions'); setMobileMenuOpen(false); }}
+              className={`w-full text-left p-4 rounded-xl font-bold ${activeTab === 'solutions' ? 'bg-[var(--primary-transparent)] text-[var(--primary)]' : 'bg-[var(--surface)] text-[var(--text-main)]'}`}
+            >
+              {t.solutions}
+            </button>
+            <button 
+              onClick={() => { setActiveTab('pricing'); setMobileMenuOpen(false); }}
+              className={`w-full text-left p-4 rounded-xl font-bold ${activeTab === 'pricing' ? 'bg-[var(--primary-transparent)] text-[var(--primary)]' : 'bg-[var(--surface)] text-[var(--text-main)]'}`}
+            >
+              {t.pricing}
+            </button>
+            <button 
+              onClick={() => { setActiveTab('docs'); setMobileMenuOpen(false); }}
+              className={`w-full text-left p-4 rounded-xl font-bold ${activeTab === 'docs' ? 'bg-[var(--primary-transparent)] text-[var(--primary)]' : 'bg-[var(--surface)] text-[var(--text-main)]'}`}
+            >
+              {t.docs}
+            </button>
+          </div>
+          
+          <div className="mt-8 pt-8 border-t border-[var(--border)] space-y-4">
+            <div className="flex gap-4">
+              <button onClick={toggleTheme} className="flex-1 p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center gap-2">
+                <span className="icon">{theme === 'dark' ? 'light_mode' : 'dark_mode'}</span> Theme
+              </button>
+              <button onClick={toggleLanguage} className="flex-1 p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center gap-2 font-black">
+                {language === 'en' ? 'BN' : 'EN'}
+              </button>
+            </div>
+            <button onClick={() => { setMobileMenuOpen(false); setIsLogin(true); setShowAuth(true); }} className="w-full btn btn-ghost py-4 bg-[var(--surface)]">
+              {t.login}
+            </button>
+            <button onClick={() => { setMobileMenuOpen(false); setIsLogin(false); setShowAuth(true); }} className="w-full btn btn-primary py-4">
+              {t.signup}
+            </button>
+          </div>
+        </div>
     </nav>
   );
 }
