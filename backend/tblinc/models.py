@@ -29,7 +29,7 @@ class User(AbstractUser):
     markup_amount = models.DecimalField(max_digits=10, decimal_places=2, default=2.00)
     two_factor_enabled = models.BooleanField(default=False)
     two_factor_secret = models.CharField(max_length=32, null=True, blank=True)
-    is_approved = models.BooleanField(default=False)
+    is_approved = models.BooleanField(default=True)
     
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
