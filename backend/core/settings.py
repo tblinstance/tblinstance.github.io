@@ -166,7 +166,7 @@ REST_FRAMEWORK = {
 DJOSER = {
     'LOGIN_FIELD': 'email',
     'USER_CREATE_PASSWORD_RETYPE': True,
-    'SEND_ACTIVATION_EMAIL': True,
+    'SEND_ACTIVATION_EMAIL': os.environ.get('EMAIL_HOST_PASSWORD', '') != '',
     'ACTIVATION_URL': 'activate/{uid}/{token}',
     'PASSWORD_RESET_CONFIRM_URL': 'password/reset/confirm/{uid}/{token}',
     'SERIALIZERS': {
@@ -186,8 +186,11 @@ SIMPLE_JWT = {
 CORS_ALLOW_ALL_ORIGINS = os.environ.get("CORS_ALLOW_ALL", "True") == "True"
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-# Email Configuration (SMTP)
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# Email Configuration
+if os.environ.get('EMAIL_HOST_PASSWORD'):
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
 EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
