@@ -335,6 +335,18 @@ if (userInfoRes.data.is_staff && (activeTab === 'users' || activeTab === 'admin_
     } finally { setLoading(false); }
   }, [showAlert]);
 
+  const activateAccount = useCallback(async (uid: string, token: string) => {
+    setLoading(true);
+    try {
+      await axios.post(`${AUTH_BASE}/users/activation/`, { uid, token });
+      showAlert('Success', 'Your account has been successfully verified! You can now log in.');
+      return { success: true };
+    } catch (err: any) {
+      showAlert('Error', 'Failed to activate account. The link might be expired or invalid.');
+      return { success: false };
+    } finally { setLoading(false); }
+  }, [showAlert]);
+
   // ── Actions ───────────────────────────────────────────────────────────────
   const handleDeposit = useCallback(async (gateway: 'ssl' | 'paypal' | 'manual') => {
     if (!depositAmount) return;
@@ -399,7 +411,7 @@ if (userInfoRes.data.is_staff && (activeTab === 'users' || activeTab === 'admin_
   const value: AppState = {
     token, email, isStaff, isSuperuser, profile_image, two_factor_enabled, setEmail, login, register, logout,
     theme, setTheme, toggleTheme, language, toggleLanguage, isMobile, sidebarOpen, setSidebarOpen, activeTab, setActiveTab, loading,
-    showAuth, setShowAuth, isLogin, setIsLogin, resetPassword, confirmPasswordReset,
+    showAuth, setShowAuth, isLogin, setIsLogin, resetPassword, confirmPasswordReset, activateAccount,
     balance, servers, plans, transactions, users, manualRequests, unapprovedUsers, notifications, adminStats, status, setStatus, setTransactions,
     selectedPlan, setSelectedPlan, selectedRegion, setSelectedRegion, selectedImage, setSelectedImage, customName, setCustomName, customRootPass, setCustomRootPass,
     depositAmount, setDepositAmount,

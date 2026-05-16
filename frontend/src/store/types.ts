@@ -15,6 +15,7 @@ export interface AppState {
   logout: () => void;
   resetPassword: (email: string) => Promise<{ success: boolean; message?: string }>;
   confirmPasswordReset: (uid: string, token: string, new_password: string) => Promise<{ success: boolean; message?: string }>;
+  activateAccount: (uid: string, token: string) => Promise<{ success: boolean; message?: string }>;
 
   // UI
   theme: string;

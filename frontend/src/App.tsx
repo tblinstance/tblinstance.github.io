@@ -43,6 +43,7 @@ import { SignupView } from './views/signup/SignupView';
 import { PublicNavbar } from './components/PublicNavbar';
 import { PublicFooter } from './components/PublicFooter';
 import { PasswordResetConfirmView } from './views/login/PasswordResetConfirmView';
+import UserActivationView from './views/login/UserActivationView';
 
 function App() {
   const store = useAppStore();
@@ -84,6 +85,15 @@ function App() {
       <>
         <GlobalModals />
         <PasswordResetConfirmView />
+      </>
+    );
+  }
+
+  if (window.location.pathname.startsWith('/activate/')) {
+    return (
+      <>
+        <GlobalModals />
+        <UserActivationView />
       </>
     );
   }
