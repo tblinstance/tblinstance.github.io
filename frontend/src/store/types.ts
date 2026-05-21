@@ -26,6 +26,8 @@ export interface AppState {
   isMobile: boolean;
   sidebarOpen: boolean;
   setSidebarOpen: (v: boolean) => void;
+  publicSidebarOpen: boolean;
+  setPublicSidebarOpen: (v: boolean) => void;
   activeTab: string;
   setActiveTab: (v: string) => void;
   loading: boolean;

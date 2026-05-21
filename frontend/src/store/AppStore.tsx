@@ -31,6 +31,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [language, setLanguage] = useState<'en' | 'bn'>('en');
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 1024);
+  const [publicSidebarOpen, setPublicSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
   const [loading, setLoading] = useState(false);
 
@@ -73,6 +74,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const handleResize = () => {
       setIsMobile(window.innerWidth < 1024);
       if (window.innerWidth < 1024) setSidebarOpen(false);
+      if (window.innerWidth >= 1024) setPublicSidebarOpen(false);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -410,7 +412,7 @@ if (userInfoRes.data.is_staff && (activeTab === 'users' || activeTab === 'admin_
   // ── Context Value ──────────────────────────────────────────────────────────
   const value: AppState = {
     token, email, isStaff, isSuperuser, profile_image, two_factor_enabled, setEmail, login, register, logout,
-    theme, setTheme, toggleTheme, language, toggleLanguage, isMobile, sidebarOpen, setSidebarOpen, activeTab, setActiveTab, loading,
+    theme, setTheme, toggleTheme, language, toggleLanguage, isMobile, sidebarOpen, setSidebarOpen, publicSidebarOpen, setPublicSidebarOpen, activeTab, setActiveTab, loading,
     showAuth, setShowAuth, isLogin, setIsLogin, resetPassword, confirmPasswordReset, activateAccount,
     balance, servers, plans, transactions, users, manualRequests, unapprovedUsers, notifications, adminStats, status, setStatus, setTransactions,
     selectedPlan, setSelectedPlan, selectedRegion, setSelectedRegion, selectedImage, setSelectedImage, customName, setCustomName, customRootPass, setCustomRootPass,

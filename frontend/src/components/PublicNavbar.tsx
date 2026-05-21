@@ -2,10 +2,7 @@ import { useState } from 'react';
 import { useAppStore } from '../store/AppStore';
 
 export function PublicNavbar() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [mobileProductsOpen, setMobileProductsOpen] = useState(false);
-  const [mobileSolutionsOpen, setMobileSolutionsOpen] = useState(false);
-  const { theme, toggleTheme, language, toggleLanguage, setShowAuth, setIsLogin, setActiveTab, activeTab } = useAppStore();
+  const { publicSidebarOpen, setPublicSidebarOpen, theme, toggleTheme, language, toggleLanguage, setShowAuth, setIsLogin, setActiveTab, activeTab } = useAppStore();
 
   const t = {
     products: language === 'en' ? 'Products' : 'প্রোডাক্টস',
@@ -228,103 +225,11 @@ export function PublicNavbar() {
         {/* Mobile Menu Toggle */}
         <button 
           className="lg:hidden w-9 h-9 rounded-xl bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text-main)] flex items-center justify-center"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          onClick={() => setPublicSidebarOpen(!publicSidebarOpen)}
         >
-          <span className="icon">{mobileMenuOpen ? 'close' : 'menu'}</span>
+          <span className="icon">{publicSidebarOpen ? 'close' : 'menu'}</span>
         </button>
       </div>
-
-      {/* Mobile Menu Overlay */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-0 top-[60px] md:top-[72px] bg-[var(--bg)] z-[150] overflow-y-auto p-5 animate-fade-in flex flex-col">
-          <div className="flex-1 space-y-2">
-            <div>
-              <button 
-                onClick={() => setMobileProductsOpen(!mobileProductsOpen)}
-                className={`w-full flex items-center justify-between p-4 rounded-xl font-bold ${activeTab === 'products' ? 'bg-[var(--primary-transparent)] text-[var(--primary)]' : 'bg-[var(--surface)] text-[var(--text-main)]'}`}
-              >
-                <span onClick={(e) => { e.stopPropagation(); setActiveTab('products'); setMobileMenuOpen(false); }}>{t.products}</span>
-                <span className="icon">{mobileProductsOpen ? 'expand_less' : 'expand_more'}</span>
-              </button>
-              {mobileProductsOpen && (
-                <div className="pl-4 pr-2 py-3 space-y-4">
-                  <div className="text-xs font-bold text-[var(--primary)]">{computeProtocolsTitle}</div>
-                  {computeItems.map(item => (
-                    <button key={item.title} onClick={() => { setActiveTab('products'); setMobileMenuOpen(false); }} className="w-full text-left flex items-center gap-3">
-                      <span className="icon text-sm text-[var(--text-muted)]">{item.icon}</span>
-                      <span className="text-sm text-[var(--text-main)]">{item.title}</span>
-                    </button>
-                  ))}
-                  <div className="text-xs font-bold text-[var(--primary)] mt-4">{storageNetworkTitle}</div>
-                  {storageItems.map(item => (
-                    <button key={item.title} onClick={() => { setActiveTab('products'); setMobileMenuOpen(false); }} className="w-full text-left flex items-center gap-3">
-                      <span className="icon text-sm text-[var(--text-muted)]">{item.icon}</span>
-                      <span className="text-sm text-[var(--text-main)]">{item.title}</span>
-                    </button>
-                  ))}
-                  <div className="text-xs font-bold text-[var(--primary)] mt-4">{securityEdgeTitle}</div>
-                  {securityItems.map(item => (
-                    <button key={item.title} onClick={() => { setActiveTab('products'); setMobileMenuOpen(false); }} className="w-full text-left flex items-center gap-3">
-                      <span className="icon text-sm text-[var(--text-muted)]">{item.icon}</span>
-                      <span className="text-sm text-[var(--text-main)]">{item.title}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div>
-              <button 
-                onClick={() => setMobileSolutionsOpen(!mobileSolutionsOpen)}
-                className={`w-full flex items-center justify-between p-4 rounded-xl font-bold ${activeTab === 'solutions' ? 'bg-[var(--primary-transparent)] text-[var(--primary)]' : 'bg-[var(--surface)] text-[var(--text-main)]'}`}
-              >
-                <span onClick={(e) => { e.stopPropagation(); setActiveTab('solutions'); setMobileMenuOpen(false); }}>{t.solutions}</span>
-                <span className="icon">{mobileSolutionsOpen ? 'expand_less' : 'expand_more'}</span>
-              </button>
-              {mobileSolutionsOpen && (
-                <div className="pl-4 pr-2 py-3 space-y-4">
-                  {solutionsItems.map(item => (
-                    <button key={item.title} onClick={() => { setActiveTab('solutions'); setMobileMenuOpen(false); }} className="w-full text-left flex items-center gap-3">
-                      <span className="icon text-sm text-[var(--text-muted)]">{item.icon}</span>
-                      <span className="text-sm text-[var(--text-main)]">{item.title}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <button 
-              onClick={() => { setActiveTab('pricing'); setMobileMenuOpen(false); }}
-              className={`w-full text-left p-4 rounded-xl font-bold ${activeTab === 'pricing' ? 'bg-[var(--primary-transparent)] text-[var(--primary)]' : 'bg-[var(--surface)] text-[var(--text-main)]'}`}
-            >
-              {t.pricing}
-            </button>
-            <button 
-              onClick={() => { setActiveTab('docs'); setMobileMenuOpen(false); }}
-              className={`w-full text-left p-4 rounded-xl font-bold ${activeTab === 'docs' ? 'bg-[var(--primary-transparent)] text-[var(--primary)]' : 'bg-[var(--surface)] text-[var(--text-main)]'}`}
-            >
-              {t.docs}
-            </button>
-          </div>
-          
-          <div className="mt-8 pt-8 border-t border-[var(--border)] space-y-4">
-            <div className="flex gap-4">
-              <button onClick={toggleTheme} className="flex-1 p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center gap-2">
-                <span className="icon">{theme === 'dark' ? 'light_mode' : 'dark_mode'}</span> Theme
-              </button>
-              <button onClick={toggleLanguage} className="flex-1 p-4 rounded-xl bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center gap-2 font-black">
-                {language === 'en' ? 'BN' : 'EN'}
-              </button>
-            </div>
-            <button onClick={() => { setMobileMenuOpen(false); setIsLogin(true); setShowAuth(true); }} className="w-full btn btn-ghost py-4 bg-[var(--surface)]">
-              {t.login}
-            </button>
-            <button onClick={() => { setMobileMenuOpen(false); setIsLogin(false); setShowAuth(true); }} className="w-full btn btn-primary py-4">
-              {t.signup}
-            </button>
-          </div>
-        </div>
-      )}
     </nav>
   );
 }

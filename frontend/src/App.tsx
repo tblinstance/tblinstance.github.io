@@ -41,6 +41,7 @@ import { StatusView } from './views/status/StatusView';
 import { LoginView } from './views/login/LoginView';
 import { SignupView } from './views/signup/SignupView';
 import { PublicNavbar } from './components/PublicNavbar';
+import { PublicSidebar } from './components/PublicSidebar';
 import { PublicFooter } from './components/PublicFooter';
 import { PasswordResetConfirmView } from './views/login/PasswordResetConfirmView';
 import UserActivationView from './views/login/UserActivationView';
@@ -112,6 +113,7 @@ function App() {
     return (
       <div className="min-h-screen bg-[var(--bg)] flex flex-col">
         <GlobalModals />
+        <PublicSidebar />
         <PublicNavbar />
         <main className="flex-1">
           {activeTab === 'home' && <LandingView />}
