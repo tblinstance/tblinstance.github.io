@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: tblinc-backend
+    env: python
+    root: .
+    buildCommand: poetry install
+    startCommand: cd backend && poetry run python manage.py migrate && poetry run gunicorn core.wsgi:application --bind 0.0.0.0:$PORT
+    autoDeploy: true
+    plan: free
+
+  - type: static
+    name: tblinc-frontend
+    env: static
+    root: frontend
+    buildCommand: npm install && npm run build
+    publishPath: dist
+    autoDeploy: true
+    plan: free
