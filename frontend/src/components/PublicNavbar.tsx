@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useAppStore } from '../store/AppStore';
 
 export function PublicNavbar() {
