@@ -16,6 +16,7 @@ from .serializers import (
     NotificationSerializer, SystemSettingSerializer
 )
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.views.decorators.csrf import csrf_exempt
 from sslcommerz_lib import SSLCOMMERZ
 from django.shortcuts import redirect, render, get_object_or_404
@@ -29,11 +30,17 @@ import base64
 from django.utils import timezone
 from datetime import timedelta
 
-# Contabo Credentials (hardcoded — confirmed working locally)
-CONTABO_CLIENT_ID = os.environ.get("CONTABO_CLIENT_ID") or "INT-14498746"
-CONTABO_CLIENT_SECRET = os.environ.get("CONTABO_CLIENT_SECRET") or "ge0nQpTMDfZYnGatHEeQSk7dZ0hlpjxU"
-CONTABO_API_USER = os.environ.get("CONTABO_API_USER") or "tblinc810@gmail.com"
-CONTABO_API_PASS = "Aaaa1111@@a"  # Hardcoded — env var ignored to prevent Render override
+# Contabo Credentials (must be provided from environment variables)
+def require_env(key):
+    value = os.environ.get(key)
+    if not value:
+        raise ImproperlyConfigured(f"Environment variable {key} is required for Contabo integration")
+    return value
+
+CONTABO_CLIENT_ID = require_env("CONTABO_CLIENT_ID")
+CONTABO_CLIENT_SECRET = require_env("CONTABO_CLIENT_SECRET")
+CONTABO_API_USER = require_env("CONTABO_API_USER")
+CONTABO_API_PASS = require_env("CONTABO_API_PASS")
 
 # SSLCommerz Credentials
 SSL_SETTINGS = {
@@ -473,9 +480,9 @@ def create_order(request):
             'total_amount': price_bdt,
             'currency': 'BDT',
             'tran_id': transaction_id,
-            'success_url': f"http://localhost:8000/api/payment/success/?id={transaction_id}",
-            'fail_url': f"http://localhost:8000/api/payment/fail/?id={transaction_id}",
-            'cancel_url': f"http://localhost:8000/api/payment/cancel/?id={transaction_id}",
+            'success_url': f"{settings.BACKEND_ROOT}/api/payment/success/?id={transaction_id}",
+            'fail_url': f"{settings.BACKEND_ROOT}/api/payment/fail/?id={transaction_id}",
+            'cancel_url': f"{settings.BACKEND_ROOT}/api/payment/cancel/?id={transaction_id}",
             'emi_option': 0,
             'cus_name': 'Test Customer',
             'cus_email': 'test@example.com',
@@ -522,9 +529,9 @@ def create_deposit(request):
             'total_amount': amount,
             'currency': 'BDT',
             'tran_id': transaction_id,
-            'success_url': f"http://localhost:8000/api/payment/success/?id={transaction_id}",
-            'fail_url': f"http://localhost:8000/api/payment/fail/?id={transaction_id}",
-            'cancel_url': f"http://localhost:8000/api/payment/cancel/?id={transaction_id}",
+            'success_url': f"{settings.BACKEND_ROOT}/api/payment/success/?id={transaction_id}",
+            'fail_url': f"{settings.BACKEND_ROOT}/api/payment/fail/?id={transaction_id}",
+            'cancel_url': f"{settings.BACKEND_ROOT}/api/payment/cancel/?id={transaction_id}",
             'emi_option': 0,
             'cus_name': request.user.email,
             'cus_email': request.user.email,
@@ -567,8 +574,8 @@ def create_paypal_deposit(request):
             "custom_id": transaction_id
         }],
         "application_context": {
-            "return_url": f"http://localhost:8000/api/paypal/success/?id={transaction_id}",
-            "cancel_url": "http://localhost:5173/billing?payment=cancel"
+            "return_url": f"{settings.BACKEND_ROOT}/api/paypal/success/?id={transaction_id}",
+            "cancel_url": f"{settings.FRONTEND_ROOT}/billing?payment=cancel"
         }
     }
     
@@ -627,8 +634,8 @@ def paypal_success(request):
             transaction_id=transaction_id,
             status='SUCCESS (PAYPAL)'
         )
-        return redirect('http://localhost:5173/billing?payment=success')
-    return redirect('http://localhost:5173/billing?payment=fail')
+        return redirect(f"{settings.FRONTEND_ROOT}/billing?payment=success")
+    return redirect(f"{settings.FRONTEND_ROOT}/billing?payment=fail")
 
 @api_view(['GET'])
 def list_transactions(request):
@@ -895,7 +902,7 @@ def payment_success(request):
                 transaction_id=transaction_id,
                 status='SUCCESS'
             )
-            return redirect('http://localhost:5173/billing?payment=success')
+            return redirect(f"{settings.FRONTEND_ROOT}/billing?payment=success")
 
         # If it's a VPS Order
         Transaction.objects.create(
@@ -955,7 +962,7 @@ def payment_success(request):
             print(f"Contabo Provisioning Failed in Webhook: {e}")
         
         # Redirect back to frontend
-        return redirect('http://localhost:5173/?payment=success')
+        return redirect(f"{settings.FRONTEND_ROOT}/?payment=success")
     except Payment.DoesNotExist:
         return Response({"error": "Payment not found"}, status=404)
 
@@ -964,14 +971,14 @@ def payment_success(request):
 @permission_classes([AllowAny])
 def payment_fail(request):
     transaction_id = request.query_params.get('id')
-    return redirect('http://localhost:5173/?payment=fail')
+    return redirect(f"{settings.FRONTEND_ROOT}/?payment=fail")
 
 @csrf_exempt
 @api_view(['POST', 'GET'])
 @permission_classes([AllowAny])
 def payment_cancel(request):
     transaction_id = request.query_params.get('id')
-    return redirect('http://localhost:5173/?payment=cancel')
+    return redirect(f"{settings.FRONTEND_ROOT}/?payment=cancel")
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])

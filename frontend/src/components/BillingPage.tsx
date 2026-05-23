@@ -44,8 +44,7 @@ export function BillingPage({ balance, balanceUsd, exchangeRate, transactions, d
 
       await axios.post(`${API_BASE}/manual/deposit/`, formData, { 
         headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
+          Authorization: `Bearer ${token}`
         } 
       });
       

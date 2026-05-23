@@ -146,7 +146,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOW_ALL_ORIGINS = True  # For development; restrict this in production
 CSRF_TRUSTED_ORIGINS = [
-    "https://tblinc-backend-onrender-com.onrender.com",
+    "https://tblinstance-github-io.onrender.com",
     "https://tblinstance.github.io",
 ]
 
@@ -173,8 +173,13 @@ DJOSER = {
     },
 }
 
-DOMAIN = os.environ.get('DOMAIN', 'tblinstance.github.io')
+DOMAIN = os.environ.get('DOMAIN', 'tblinstance-github-io.onrender.com')
 SITE_NAME = 'TBLINC Cloud'
+
+# Absolute roots for URL generation (include scheme, no trailing slash)
+# Default to production endpoints but allow override via environment variables.
+BACKEND_ROOT = os.environ.get('BACKEND_ROOT', 'https://tblinstance-github-io.onrender.com').rstrip('/')
+FRONTEND_ROOT = os.environ.get('FRONTEND_ROOT', 'https://tblinstance.github.io').rstrip('/')
 
 SIMPLE_JWT = {
    'AUTH_HEADER_TYPES': ('Bearer',),

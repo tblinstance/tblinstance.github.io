@@ -206,10 +206,11 @@ if (userInfoRes.data.is_staff && (activeTab === 'users' || activeTab === 'admin_
       setShowAuth(false);
       return { success: true };
     } catch (err: any) {
+      const errorMessage = err.response?.data?.error || err.response?.data?.detail || err.message || 'Login failed';
       if (err.response?.status === 403) {
         showAlert('Account Pending Approval', err.response?.data?.detail || 'Your account is verified but awaiting administrative approval.');
       } else {
-        showAlert('Error', err.response?.data?.error || 'Invalid credentials');
+        showAlert('Error', errorMessage);
       }
       return { error: true };
     } finally { setLoading(false); }

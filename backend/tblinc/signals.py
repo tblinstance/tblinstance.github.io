@@ -21,9 +21,16 @@ def send_admin_approval_email(sender, instance, created, **kwargs):
         uid = urlsafe_base64_encode(force_bytes(instance.pk))
         token = default_token_generator.make_token(instance)
         
-        domain = getattr(settings, 'DOMAIN', 'localhost:8000')
+        backend_root = getattr(settings, 'BACKEND_ROOT', None)
+        if backend_root:
+            backend_root = backend_root.rstrip('/')
+        else:
+            # fallback to DOMAIN (may not include scheme)
+            domain = getattr(settings, 'DOMAIN', 'localhost:8000')
+            backend_root = f"http://{domain}".rstrip('/')
+
         # We'll use a backend link for direct approval from email
-        approval_url = f"http://{domain}/api/admin/approve-link/{uid}/{token}/"
+        approval_url = f"{backend_root}/api/admin/approve-link/{uid}/{token}/"
         
         admin_email = os.environ.get('EMAIL_HOST_USER') # Sending to the same email for now
         
