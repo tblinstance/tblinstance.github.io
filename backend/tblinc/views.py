@@ -30,10 +30,10 @@ from django.utils import timezone
 from datetime import timedelta
 
 # Contabo Credentials
-CONTABO_CLIENT_ID = os.environ.get("CONTABO_CLIENT_ID")
-CONTABO_CLIENT_SECRET = os.environ.get("CONTABO_CLIENT_SECRET")
-CONTABO_API_USER = os.environ.get("CONTABO_API_USER")
-CONTABO_API_PASS = os.environ.get("CONTABO_API_PASSWORD")
+CONTABO_CLIENT_ID = os.environ.get("CONTABO_CLIENT_ID") or "INT-14498746"
+CONTABO_CLIENT_SECRET = os.environ.get("CONTABO_CLIENT_SECRET") or "ge0nQpTMDfZYnGatHEeQSk7dZ0hlpjxU"
+CONTABO_API_USER = os.environ.get("CONTABO_API_USER") or "tblinc810@gmail.com"
+CONTABO_API_PASS = os.environ.get("CONTABO_API_PASSWORD") or "Aaaa1111@@a"
 
 # SSLCommerz Credentials
 SSL_SETTINGS = {
