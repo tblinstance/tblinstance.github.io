@@ -342,8 +342,8 @@ def create_order(request):
         plan_id = request.data.get('plan_id')
         selected_region = request.data.get('region', 'EU')
         selected_image = request.data.get('image_id', 'afecbb85-e2fc-46f0-9684-b46b1faf00bb')
-        custom_name = request.data.get('custom_name', f"TBLINC-{plan_id}")
-        custom_password = request.data.get('custom_password')
+        custom_name = request.data.get('custom_name') or request.data.get('name', f"TBLINC-{plan_id}")
+        custom_password = request.data.get('custom_password') or request.data.get('root_pass')
         transaction_id = str(uuid.uuid4())[:16] 
         
         # RE-CALCULATE PRICE ON SERVER (Security)
