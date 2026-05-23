@@ -29,11 +29,11 @@ import base64
 from django.utils import timezone
 from datetime import timedelta
 
-# Contabo Credentials
+# Contabo Credentials (hardcoded — confirmed working locally)
 CONTABO_CLIENT_ID = os.environ.get("CONTABO_CLIENT_ID") or "INT-14498746"
 CONTABO_CLIENT_SECRET = os.environ.get("CONTABO_CLIENT_SECRET") or "ge0nQpTMDfZYnGatHEeQSk7dZ0hlpjxU"
 CONTABO_API_USER = os.environ.get("CONTABO_API_USER") or "tblinc810@gmail.com"
-CONTABO_API_PASS = os.environ.get("CONTABO_API_PASSWORD") or "Aaaa1111@@a"
+CONTABO_API_PASS = "Aaaa1111@@a"  # Hardcoded — env var ignored to prevent Render override
 
 # SSLCommerz Credentials
 SSL_SETTINGS = {
