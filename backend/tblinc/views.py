@@ -37,10 +37,18 @@ def require_env(key):
         raise ImproperlyConfigured(f"Environment variable {key} is required for Contabo integration")
     return value
 
-CONTABO_CLIENT_ID = require_env("CONTABO_CLIENT_ID")
-CONTABO_CLIENT_SECRET = require_env("CONTABO_CLIENT_SECRET")
-CONTABO_API_USER = require_env("CONTABO_API_USER")
-CONTABO_API_PASS = require_env("CONTABO_API_PASS")
+contabo = None
+
+def get_contabo():
+    global contabo
+    if contabo is None:
+        contabo = ContaboAPI(
+            require_env("CONTABO_CLIENT_ID"),
+            require_env("CONTABO_CLIENT_SECRET"),
+            require_env("CONTABO_API_USER"),
+            require_env("CONTABO_API_PASS"),
+        )
+    return contabo
 
 # SSLCommerz Credentials
 SSL_SETTINGS = {
@@ -49,7 +57,6 @@ SSL_SETTINGS = {
     'issandbox': os.environ.get("SSL_IS_SANDBOX", "True") == "True"
 }
 
-contabo = ContaboAPI(CONTABO_CLIENT_ID, CONTABO_CLIENT_SECRET, CONTABO_API_USER, CONTABO_API_PASS)
 sslcz = SSLCOMMERZ(SSL_SETTINGS)
 
 # PayPal Credentials
@@ -190,7 +197,7 @@ def health_check(request):
     # Test Contabo Connectivity
     contabo_status = "Connected"
     try:
-        contabo._get_access_token()
+        get_contabo()._get_access_token()
     except Exception as e:
         error_msg = str(e)
         if hasattr(e, 'response') and e.response is not None:
@@ -200,8 +207,8 @@ def health_check(request):
         "status": "ok",
         "message": "Subhosting API is running",
         "contabo_api": contabo_status,
-        "debug_client_id": CONTABO_CLIENT_ID,
-        "debug_api_user": CONTABO_API_USER,
+        "debug_client_id": os.environ.get("CONTABO_CLIENT_ID"),
+        "debug_api_user": os.environ.get("CONTABO_API_USER"),
     })
 
 @api_view(['GET'])
@@ -269,7 +276,7 @@ def sync_exchange_rate(request):
 def list_servers(request):
     try:
         import requests as req
-        headers = contabo._get_headers()
+        headers = get_contabo()._get_headers()
         res = req.get('https://api.contabo.com/v1/compute/instances', headers=headers)
         if res.status_code == 200:
             contabo_servers = res.json().get('data', [])
@@ -417,12 +424,12 @@ def create_order(request):
                     root_pass += "A1!"
                 
                 # STEP 1: Create a Secret on Contabo
-                secret_id = contabo.create_secret(
+                secret_id = get_contabo().create_secret(
                     name=f"PASS-{custom_name}",
                     value=root_pass
                 )
                 
-                res = contabo.create_instance(
+                res = get_contabo().create_instance(
                     productId=plan_id,
                     region=selected_region,
                     imageId=selected_image,
@@ -690,10 +697,10 @@ def server_control(request, server_id):
             new_pass = request.data.get('password', 'DefaultPass123!')
             
             # Create a secret for the new password
-            pass_id = contabo.create_secret(f"rebuild-{server.id}", new_pass)
-            success = contabo.reinstall_instance(server.contabo_id, image_id, pass_id)
+            pass_id = get_contabo().create_secret(f"rebuild-{server.id}", new_pass)
+            success = get_contabo().reinstall_instance(server.contabo_id, image_id, pass_id)
         else:
-            success = contabo.control_instance(server.contabo_id, action)
+            success = get_contabo().control_instance(server.contabo_id, action)
         
         if success:
             if action == 'stop': server.status = 'STOPPED'
@@ -929,7 +936,7 @@ def payment_success(request):
             import string
             root_pass = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(16))
 
-            res = contabo.create_instance(
+            res = get_contabo().create_instance(
                 productId=payment.plan_id,
                 region="EU",
                 imageId=UBUNTU_IMAGE_UUID,
@@ -1147,8 +1154,7 @@ def admin_delete_suspended_server(request):
             return Response({"error": "Only suspended servers can be deleted here."}, status=400)
             
         # Cancel on Contabo
-        contabo = ContaboAPI(CONTABO_CLIENT_ID, CONTABO_CLIENT_SECRET, CONTABO_API_USER, CONTABO_API_PASS)
-        contabo.cancel_instance(server.contabo_id)
+        get_contabo().cancel_instance(server.contabo_id)
         
         # Delete from DB
         server.delete()
@@ -1175,8 +1181,7 @@ def admin_deploy_for_user(request):
         plan = Product.objects.get(id=plan_id) # Product is the plan model
         
         # Deploy on Contabo
-        contabo = ContaboAPI(CONTABO_CLIENT_ID, CONTABO_CLIENT_SECRET, CONTABO_API_USER, CONTABO_API_PASS)
-        response = contabo.create_instance(
+        response = get_contabo().create_instance(
             name=name,
             product_id=plan.product_id,
             region=region,
@@ -1277,7 +1282,7 @@ def delete_account(request):
         for s in servers:
             try:
                 if s.contabo_id and s.contabo_id != 'PENDING':
-                    contabo.cancel_instance(s.contabo_id)
+                    get_contabo().cancel_instance(s.contabo_id)
             except Exception as e:
                 print(f"Failed to cancel contabo instance {s.contabo_id}: {e}")
         
@@ -1309,7 +1314,7 @@ def admin_delete_user(request):
         for s in servers:
             try:
                 if s.contabo_id and s.contabo_id != 'PENDING':
-                    contabo.cancel_instance(s.contabo_id)
+                    get_contabo().cancel_instance(s.contabo_id)
             except: pass
         user_email = user_to_delete.email
         user_to_delete.delete()
@@ -1562,7 +1567,7 @@ def mark_chat_read(request):
 @permission_classes([IsAuthenticated])
 def list_object_storages(request):
     try:
-        res = contabo.list_object_storages()
+        res = get_contabo().list_object_storages()
         return Response(res.get('data', []))
     except Exception as e:
         return Response({"error": str(e)}, status=500)
@@ -1571,7 +1576,7 @@ def list_object_storages(request):
 @permission_classes([IsAuthenticated])
 def list_private_networks(request):
     try:
-        res = contabo.list_private_networks()
+        res = get_contabo().list_private_networks()
         return Response(res.get('data', []))
     except Exception as e:
         return Response({"error": str(e)}, status=500)
@@ -1580,7 +1585,7 @@ def list_private_networks(request):
 @permission_classes([IsAuthenticated])
 def list_dns_zones(request):
     try:
-        res = contabo.list_dns_zones()
+        res = get_contabo().list_dns_zones()
         return Response(res.get('data', []))
     except Exception as e:
         return Response({"error": str(e)}, status=500)
@@ -1589,7 +1594,7 @@ def list_dns_zones(request):
 @permission_classes([IsAuthenticated])
 def list_dns_records(request, zone_id):
     try:
-        res = contabo.list_dns_records(zone_id)
+        res = get_contabo().list_dns_records(zone_id)
         return Response(res.get('data', []))
     except Exception as e:
         return Response({"error": str(e)}, status=500)
@@ -1598,7 +1603,7 @@ def list_dns_records(request, zone_id):
 @permission_classes([IsAuthenticated])
 def list_firewalls(request):
     try:
-        res = contabo.list_firewalls()
+        res = get_contabo().list_firewalls()
         return Response(res.get('data', []))
     except Exception as e:
         return Response({"error": str(e)}, status=500)
@@ -1607,7 +1612,7 @@ def list_firewalls(request):
 @permission_classes([IsAuthenticated])
 def list_snapshots(request):
     try:
-        res = contabo.list_all_snapshots()
+        res = get_contabo().list_all_snapshots()
         return Response(res.get('data', []))
     except Exception as e:
         return Response({"error": str(e)}, status=500)
@@ -1616,7 +1621,7 @@ def list_snapshots(request):
 @permission_classes([IsAuthenticated])
 def list_load_balancers(request):
     try:
-        res = contabo.list_load_balancers()
+        res = get_contabo().list_load_balancers()
         return Response(res.get('data', []))
     except Exception as e:
         return Response({"error": str(e)}, status=500)
