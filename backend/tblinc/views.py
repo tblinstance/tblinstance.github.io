@@ -183,18 +183,18 @@ def health_check(request):
     # Test Contabo Connectivity
     contabo_status = "Connected"
     try:
-        contabo._get_access_token() # Try to get a token
+        contabo._get_access_token()
     except Exception as e:
-        # Check if it's a requests error with a response
         error_msg = str(e)
         if hasattr(e, 'response') and e.response is not None:
             error_msg += f" - Response: {e.response.text}"
-        print(f"DEBUG: Contabo Auth Failed: {error_msg}")
         contabo_status = f"Authentication Failed: {error_msg}"
     return Response({
-        "status": "ok", 
+        "status": "ok",
         "message": "Subhosting API is running",
-        "contabo_api": contabo_status
+        "contabo_api": contabo_status,
+        "debug_client_id": CONTABO_CLIENT_ID,
+        "debug_api_user": CONTABO_API_USER,
     })
 
 @api_view(['GET'])
