@@ -322,12 +322,78 @@ def list_servers(request):
 def get_plans(request):
     # Base prices in USD (Contabo Original)
     PLANS = [
-        {'id': 'V91', 'name': 'Cloud VPS 10', 'cpu': 4, 'ram': '8 GB', 'storage': '75 GB NVMe', 'bandwidth': '32 TB', 'base_usd': 5.62},
-        {'id': 'V94', 'name': 'Cloud VPS 20', 'cpu': 6, 'ram': '12 GB', 'storage': '100 GB NVMe', 'bandwidth': '32 TB', 'base_usd': 8.75},
-        {'id': 'V97', 'name': 'Cloud VPS 30', 'cpu': 8, 'ram': '24 GB', 'storage': '200 GB NVMe', 'bandwidth': '32 TB', 'base_usd': 17.50},
-        {'id': 'V100', 'name': 'Cloud VPS 40', 'cpu': 12, 'ram': '48 GB', 'storage': '250 GB NVMe', 'bandwidth': '32 TB', 'base_usd': 31.25},
-        {'id': 'V103', 'name': 'Cloud VPS 50', 'cpu': 16, 'ram': '64 GB', 'storage': '300 GB NVMe', 'bandwidth': '32 TB', 'base_usd': 46.25},
-        {'id': 'V106', 'name': 'Cloud VPS 60', 'cpu': 18, 'ram': '96 GB', 'storage': '350 GB NVMe', 'bandwidth': '32 TB', 'base_usd': 61.25},
+        {
+            'id': 'V91', 
+            'name': 'Cloud VPS S', 
+            'cpu': 4, 
+            'ram': '8 GB', 
+            'storage': '50 GB NVMe', 
+            'bandwidth': '32 TB', 
+            'snapshots': 1, 
+            'port_speed': '200 Mbit/s', 
+            'traffic': 'Unlimited',
+            'base_usd': 5.62
+        },
+        {
+            'id': 'V94', 
+            'name': 'Cloud VPS M', 
+            'cpu': 6, 
+            'ram': '16 GB', 
+            'storage': '100 GB NVMe', 
+            'bandwidth': '32 TB', 
+            'snapshots': 2, 
+            'port_speed': '400 Mbit/s', 
+            'traffic': 'Unlimited',
+            'base_usd': 8.75
+        },
+        {
+            'id': 'V97', 
+            'name': 'Cloud VPS L', 
+            'cpu': 8, 
+            'ram': '32 GB', 
+            'storage': '200 GB NVMe', 
+            'bandwidth': '32 TB', 
+            'snapshots': 3, 
+            'port_speed': '600 Mbit/s', 
+            'traffic': 'Unlimited',
+            'base_usd': 17.50
+        },
+        {
+            'id': 'V100', 
+            'name': 'Cloud VPS XL', 
+            'cpu': 10, 
+            'ram': '60 GB', 
+            'storage': '400 GB NVMe', 
+            'bandwidth': '32 TB', 
+            'snapshots': 4, 
+            'port_speed': '1 Gbit/s', 
+            'traffic': 'Unlimited',
+            'base_usd': 31.25
+        },
+        {
+            'id': 'V103', 
+            'name': 'Cloud VPS XXL', 
+            'cpu': 16, 
+            'ram': '64 GB', 
+            'storage': '500 GB NVMe', 
+            'bandwidth': '32 TB', 
+            'snapshots': 4, 
+            'port_speed': '1 Gbit/s', 
+            'traffic': 'Unlimited',
+            'base_usd': 46.25
+        },
+        {
+            'id': 'V106', 
+            'name': 'Cloud VPS Ultra', 
+            'cpu': 18, 
+            'ram': '96 GB', 
+            'storage': '600 GB NVMe', 
+            'bandwidth': '32 TB', 
+            'snapshots': 4, 
+            'port_speed': '1 Gbit/s', 
+            'traffic': 'Unlimited',
+            'base_usd': 61.25
+        },
     ]
     
     rate_setting = SystemSetting.objects.filter(key='bdt_usd_rate').first()

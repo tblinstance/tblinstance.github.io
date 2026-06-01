@@ -8,6 +8,9 @@ export interface Plan {
   price_bdt: number;
   base_price?: number;
   markup?: number;
+  snapshots?: number;
+  port_speed?: string;
+  traffic?: string;
 }
 
 export interface ModalConfig {

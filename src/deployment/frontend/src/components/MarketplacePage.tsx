@@ -87,23 +87,41 @@ export function MarketplacePage({ plans, onSelect, exchangeRate }: MarketplacePr
             
             <hr className="border-t border-[var(--border)] my-0 mb-6" />
             
-            <ul className="list-none p-0 m-0 mb-8 grid gap-4 flex-1">
-              <li className="flex items-center gap-3 text-[var(--text-sub)]">
+            <ul className="list-none p-0 m-0 mb-8 grid grid-cols-2 gap-4 flex-1">
+              <li className="flex items-center gap-2.5 text-[var(--text-sub)]">
                 <span className="icon text-[var(--primary)] shrink-0">memory</span>
-                <span className="font-medium">{p.cpu} vCPU</span>
+                <span className="font-semibold text-xs">{p.cpu} vCPU Cores</span>
               </li>
-              <li className="flex items-center gap-3 text-[var(--text-sub)]">
+              <li className="flex items-center gap-2.5 text-[var(--text-sub)]">
                 <span className="icon text-[var(--primary)] shrink-0">speed</span>
-                <span className="font-medium">{p.ram} RAM</span>
+                <span className="font-semibold text-xs">{p.ram} RAM</span>
               </li>
-              <li className="flex items-center gap-3 text-[var(--text-sub)]">
+              <li className="flex items-center gap-2.5 text-[var(--text-sub)]">
                 <span className="icon text-[var(--primary)] shrink-0">dns</span>
-                <span className="font-medium">{p.storage}</span>
+                <span className="font-semibold text-xs">{p.storage}</span>
               </li>
-              <li className="flex items-center gap-3 text-[var(--text-sub)]">
+              <li className="flex items-center gap-2.5 text-[var(--text-sub)]">
                 <span className="icon text-[var(--primary)] shrink-0">public</span>
-                <span className="font-medium">{p.bandwidth} Bandwidth</span>
+                <span className="font-semibold text-xs">{p.bandwidth} Out</span>
               </li>
+              {p.snapshots && (
+                <li className="flex items-center gap-2.5 text-[var(--text-sub)]">
+                  <span className="icon text-[var(--primary)] shrink-0">layers</span>
+                  <span className="font-semibold text-xs">{p.snapshots} {p.snapshots === 1 ? 'Snapshot' : 'Snapshots'}</span>
+                </li>
+              )}
+              {p.port_speed && (
+                <li className="flex items-center gap-2.5 text-[var(--text-sub)]">
+                  <span className="icon text-[var(--primary)] shrink-0">bolt</span>
+                  <span className="font-semibold text-xs">{p.port_speed} Port</span>
+                </li>
+              )}
+              {p.traffic && (
+                <li className="flex items-center gap-2.5 text-[var(--text-sub)] col-span-2">
+                  <span className="icon text-[var(--success)] shrink-0">all_inclusive</span>
+                  <span className="font-semibold text-xs text-[var(--text-main)]">Unlimited Incoming Traffic</span>
+                </li>
+              )}
             </ul>
             
             <button onClick={() => onSelect(p)} className="btn btn-primary w-full py-3.5 text-base">
