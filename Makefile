@@ -1,8 +1,8 @@
 # TBLINC Management Makefile
 
 # Variables
-BACKEND_DIR = backend
-FRONTEND_DIR = frontend
+BACKEND_DIR = src/deployment/backend
+FRONTEND_DIR = src/deployment/frontend
 BACKEND_PID_FILE = .backend.pid
 FRONTEND_PID_FILE = .frontend.pid
 BACKEND_LOG = backend.log

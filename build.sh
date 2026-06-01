@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-cd backend
+cd src/deployment/backend
 
 # Install dependencies
 pip install -r ../requirements.txt 2>/dev/null || pip install poetry && poetry install --no-root 2>/dev/null || true
