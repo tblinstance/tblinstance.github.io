@@ -1,6 +1,7 @@
 export interface Plan {
   id: string;
   name: string;
+  category?: 'VPS' | 'VDS' | 'DEDICATED';
   cpu: number;
   ram: string;
   storage: string;

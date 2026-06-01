@@ -322,9 +322,11 @@ def list_servers(request):
 def get_plans(request):
     # Base prices in USD (Contabo Original)
     PLANS = [
+        # ─── Cloud VPS ────────────────────────────────────────────────────────
         {
             'id': 'V91', 
             'name': 'Cloud VPS S', 
+            'category': 'VPS',
             'cpu': 4, 
             'ram': '8 GB', 
             'storage': '50 GB NVMe', 
@@ -332,11 +334,12 @@ def get_plans(request):
             'snapshots': 1, 
             'port_speed': '200 Mbit/s', 
             'traffic': 'Unlimited',
-            'base_usd': 5.62
+            'base_usd': 4.80
         },
         {
             'id': 'V94', 
             'name': 'Cloud VPS M', 
+            'category': 'VPS',
             'cpu': 6, 
             'ram': '16 GB', 
             'storage': '100 GB NVMe', 
@@ -344,11 +347,12 @@ def get_plans(request):
             'snapshots': 2, 
             'port_speed': '400 Mbit/s', 
             'traffic': 'Unlimited',
-            'base_usd': 8.75
+            'base_usd': 7.50
         },
         {
             'id': 'V97', 
             'name': 'Cloud VPS L', 
+            'category': 'VPS',
             'cpu': 8, 
             'ram': '32 GB', 
             'storage': '200 GB NVMe', 
@@ -356,43 +360,139 @@ def get_plans(request):
             'snapshots': 3, 
             'port_speed': '600 Mbit/s', 
             'traffic': 'Unlimited',
-            'base_usd': 17.50
+            'base_usd': 15.00
         },
         {
             'id': 'V100', 
             'name': 'Cloud VPS XL', 
-            'cpu': 10, 
-            'ram': '60 GB', 
+            'category': 'VPS',
+            'cpu': 12, 
+            'ram': '64 GB', 
             'storage': '400 GB NVMe', 
             'bandwidth': '32 TB', 
             'snapshots': 4, 
             'port_speed': '1 Gbit/s', 
             'traffic': 'Unlimited',
-            'base_usd': 31.25
+            'base_usd': 27.00
+        },
+        # ─── Cloud VDS ────────────────────────────────────────────────────────
+        {
+            'id': 'VDS-S', 
+            'name': 'Cloud VDS S', 
+            'category': 'VDS',
+            'cpu': 3, 
+            'ram': '24 GB', 
+            'storage': '180 GB NVMe', 
+            'bandwidth': '32 TB', 
+            'snapshots': 2, 
+            'port_speed': '250 Mbit/s', 
+            'traffic': 'Unlimited',
+            'base_usd': 37.00
         },
         {
-            'id': 'V103', 
-            'name': 'Cloud VPS XXL', 
-            'cpu': 16, 
+            'id': 'VDS-M', 
+            'name': 'Cloud VDS M', 
+            'category': 'VDS',
+            'cpu': 4, 
+            'ram': '32 GB', 
+            'storage': '240 GB NVMe', 
+            'bandwidth': '32 TB', 
+            'snapshots': 3, 
+            'port_speed': '500 Mbit/s', 
+            'traffic': 'Unlimited',
+            'base_usd': 49.00
+        },
+        {
+            'id': 'VDS-L', 
+            'name': 'Cloud VDS L', 
+            'category': 'VDS',
+            'cpu': 6, 
+            'ram': '48 GB', 
+            'storage': '360 GB NVMe', 
+            'bandwidth': '32 TB', 
+            'snapshots': 4, 
+            'port_speed': '750 Mbit/s', 
+            'traffic': 'Unlimited',
+            'base_usd': 74.00
+        },
+        {
+            'id': 'VDS-XL', 
+            'name': 'Cloud VDS XL', 
+            'category': 'VDS',
+            'cpu': 8, 
             'ram': '64 GB', 
-            'storage': '500 GB NVMe', 
+            'storage': '480 GB NVMe', 
             'bandwidth': '32 TB', 
             'snapshots': 4, 
             'port_speed': '1 Gbit/s', 
             'traffic': 'Unlimited',
-            'base_usd': 46.25
+            'base_usd': 98.00
         },
         {
-            'id': 'V106', 
-            'name': 'Cloud VPS Ultra', 
-            'cpu': 18, 
+            'id': 'VDS-XXL', 
+            'name': 'Cloud VDS XXL', 
+            'category': 'VDS',
+            'cpu': 12, 
             'ram': '96 GB', 
-            'storage': '600 GB NVMe', 
+            'storage': '720 GB NVMe', 
             'bandwidth': '32 TB', 
             'snapshots': 4, 
             'port_speed': '1 Gbit/s', 
             'traffic': 'Unlimited',
-            'base_usd': 61.25
+            'base_usd': 147.00
+        },
+        # ─── Dedicated Servers ────────────────────────────────────────────────
+        {
+            'id': 'DED-XEON', 
+            'name': 'Intel Xeon 8-Core', 
+            'category': 'DEDICATED',
+            'cpu': 8, 
+            'ram': '32 GB', 
+            'storage': '1 TB HDD', 
+            'bandwidth': 'Unlimited', 
+            'snapshots': 0, 
+            'port_speed': '100 Mbit/s', 
+            'traffic': 'Unlimited',
+            'base_usd': 38.00
+        },
+        {
+            'id': 'DED-RYZEN', 
+            'name': 'AMD Ryzen 12-Core', 
+            'category': 'DEDICATED',
+            'cpu': 12, 
+            'ram': '64 GB', 
+            'storage': '1 TB NVMe', 
+            'bandwidth': 'Unlimited', 
+            'snapshots': 0, 
+            'port_speed': '1 Gbit/s', 
+            'traffic': 'Unlimited',
+            'base_usd': 92.00
+        },
+        {
+            'id': 'DED-EPYC16', 
+            'name': 'AMD EPYC 16-Core', 
+            'category': 'DEDICATED',
+            'cpu': 16, 
+            'ram': '128 GB', 
+            'storage': '1.2 TB NVMe', 
+            'bandwidth': 'Unlimited', 
+            'snapshots': 0, 
+            'port_speed': '1 Gbit/s', 
+            'traffic': 'Unlimited',
+            'base_usd': 123.00
+        },
+        {
+            'id': 'DED-EPYC32', 
+            'name': 'AMD EPYC 32-Core', 
+            'category': 'DEDICATED',
+            'cpu': 32, 
+            'ram': '256 GB', 
+            'storage': '2 TB NVMe', 
+            'bandwidth': 'Unlimited', 
+            'snapshots': 0, 
+            'port_speed': '1 Gbit/s', 
+            'traffic': 'Unlimited',
+            'base_usd': 292.00
         },
     ]
     
@@ -426,12 +526,19 @@ def create_order(request):
         # RE-CALCULATE PRICE ON SERVER (Security)
         # Base prices in USD (Contabo Original)
         base_usd_prices = {
-            'V91': 5.62, 
-            'V94': 8.75, 
-            'V97': 17.50, 
-            'V100': 31.25, 
-            'V103': 46.25, 
-            'V106': 61.25
+            'V91': 4.80, 
+            'V94': 7.50, 
+            'V97': 15.00, 
+            'V100': 27.00,
+            'VDS-S': 37.00,
+            'VDS-M': 49.00,
+            'VDS-L': 74.00,
+            'VDS-XL': 98.00,
+            'VDS-XXL': 147.00,
+            'DED-XEON': 38.00,
+            'DED-RYZEN': 92.00,
+            'DED-EPYC16': 123.00,
+            'DED-EPYC32': 292.00,
         }
         
         rate_setting = SystemSetting.objects.filter(key='bdt_usd_rate').first()

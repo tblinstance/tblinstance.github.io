@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { Plan } from './types';
 
 interface MarketplaceProps {
@@ -7,6 +8,9 @@ interface MarketplaceProps {
 }
 
 export function MarketplacePage({ plans, onSelect, exchangeRate }: MarketplaceProps) {
+  const [selectedCategory, setSelectedCategory] = useState<'VPS' | 'VDS' | 'DEDICATED'>('VPS');
+  const filteredPlans = plans.filter(p => (p.category || 'VPS').toUpperCase() === selectedCategory);
+
   return (
     <div className="animate-fade-in max-w-7xl mx-auto">
       {/* Hero Banner */}
@@ -61,9 +65,26 @@ export function MarketplacePage({ plans, onSelect, exchangeRate }: MarketplacePr
         </div>
       </div>
 
+      {/* Category Selection Tabs */}
+      <div className="flex justify-center gap-4 mb-10 p-1.5 bg-[var(--surface-2)] border border-[var(--border)] rounded-[2rem] max-w-md mx-auto">
+        {(['VPS', 'VDS', 'DEDICATED'] as const).map(cat => (
+          <button
+            key={cat}
+            onClick={() => setSelectedCategory(cat)}
+            className={`flex-1 py-3 px-6 rounded-full text-xs font-black uppercase tracking-widest transition-all duration-300 ${
+              selectedCategory === cat
+                ? 'bg-[var(--primary)] text-white shadow-lg shadow-[var(--primary-transparent)] scale-105'
+                : 'text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-[var(--surface)]'
+            }`}
+          >
+            {cat === 'DEDICATED' ? 'Dedicated' : cat}
+          </button>
+        ))}
+      </div>
+
       {/* Plan Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-        {plans.map(p => (
+        {filteredPlans.map(p => (
           <div key={p.id} className="card p-8 flex flex-col hover:-translate-y-1">
             <div className="flex justify-between items-start mb-6">
               <h3 className="text-xl font-bold text-[var(--text-main)] m-0">{p.name}</h3>
