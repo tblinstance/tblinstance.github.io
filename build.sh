@@ -1,19 +1,39 @@
 #!/usr/bin/env bash
 set -e
 
-cd src/deployment/backend
+# ─── Paths ────────────────────────────────────────────────────────────────────
+REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
+BACKEND_DIR="$REPO_ROOT/src/deployment/backend"
 
-# Install dependencies
-pip install -r ../requirements.txt 2>/dev/null || pip install poetry && poetry install --no-root 2>/dev/null || true
+echo "==> REPO_ROOT: $REPO_ROOT"
+echo "==> BACKEND_DIR: $BACKEND_DIR"
 
-# Run migrations
-python manage.py migrate --noinput
+# ─── Install Python dependencies ──────────────────────────────────────────────
+echo "==> Installing Python dependencies..."
+cd "$REPO_ROOT"
 
-# Collect static files
-python manage.py collectstatic --noinput
+if command -v poetry &>/dev/null; then
+    echo "==> Using poetry..."
+    poetry install --no-root
+else
+    echo "==> Installing poetry..."
+    pip install poetry
+    poetry install --no-root
+fi
 
-# Create/update admin superuser
-python manage.py shell -c "
+# ─── Django setup ─────────────────────────────────────────────────────────────
+cd "$BACKEND_DIR"
+export DJANGO_SETTINGS_MODULE=core.settings
+
+echo "==> Running migrations..."
+poetry run python manage.py migrate --noinput
+
+echo "==> Collecting static files..."
+poetry run python manage.py collectstatic --noinput
+
+# ─── Create / update superuser ────────────────────────────────────────────────
+echo "==> Creating superuser..."
+poetry run python manage.py shell -c "
 from tblinc.models import User
 
 email = 'tblinc810@gmail.com'
@@ -34,4 +54,4 @@ else:
     print(f'Superuser updated: {email}')
 "
 
-echo "Build complete."
+echo "==> Build complete."
