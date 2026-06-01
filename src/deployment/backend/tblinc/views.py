@@ -205,10 +205,7 @@ def health_check(request):
         contabo_status = f"Authentication Failed: {error_msg}"
     return Response({
         "status": "ok",
-        "message": "Subhosting API is running",
         "contabo_api": contabo_status,
-        "debug_client_id": os.environ.get("CONTABO_CLIENT_ID"),
-        "debug_api_user": os.environ.get("CONTABO_API_USER"),
     })
 
 @api_view(['GET'])
