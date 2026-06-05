@@ -11,7 +11,7 @@ export function CommunityView() {
       {/* Matrix Header */}
       <section className="relative py-32 px-5 md:px-12 overflow-hidden border-b border-[var(--border)]">
         <div className="absolute inset-0 z-0">
-           <img src="/analytics_bg.png" className="w-full h-full object-cover opacity-[0.05] dark:opacity-[0.1] grayscale" alt="Matrix" />
+           <img src="/analytics_bg.webp" className="w-full h-full object-cover opacity-[0.05] dark:opacity-[0.1] grayscale" alt="Matrix" />
            <div className="absolute inset-0 bg-gradient-to-b from-[var(--bg)] via-transparent to-[var(--bg)]" />
         </div>
 
@@ -70,7 +70,7 @@ export function CommunityView() {
                 </div>
              </div>
              <div className="flex-1 w-full lg:w-auto aspect-square rounded-[3rem] overflow-hidden relative">
-                <img src="/analytics_bg.png" className="w-full h-full object-cover grayscale opacity-20" alt="Community" />
+                <img src="/analytics_bg.webp" className="w-full h-full object-cover grayscale opacity-20" alt="Community" />
                 <div className="absolute inset-0 flex items-center justify-center">
                    <div className="text-8xl font-black text-[var(--primary)] opacity-10 select-none">MESH</div>
                 </div>

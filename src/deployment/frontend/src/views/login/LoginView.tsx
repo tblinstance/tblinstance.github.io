@@ -161,7 +161,7 @@ export function LoginView() {
           {/* Background Image with Overlay */}
           <div className="absolute inset-0 z-0">
             <img 
-              src="/analytics_bg.png" 
+              src="/analytics_bg.webp" 
               alt="Global Network" 
               className="w-full h-full object-cover opacity-20 mix-blend-screen grayscale hover:grayscale-0 transition-all duration-1000 scale-105 hover:scale-100" 
             />

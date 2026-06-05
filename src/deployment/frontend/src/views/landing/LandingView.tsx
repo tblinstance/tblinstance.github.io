@@ -7,9 +7,9 @@ export function LandingView() {
   const [activeSlide, setActiveSlide] = useState(0);
 
   const slides = [
-    { img: '/analytics_bg.png', title: 'Global Node Oversight', desc: 'Real-time telemetry and network monitoring.' },
-    { img: '/analytics_bg.png', title: 'Compute Core Performance', desc: 'NVMe storage and high-bandwidth processing.' },
-    { img: '/analytics_bg.png', title: 'Security Protocol Layer', desc: 'DDoS mitigation and encrypted transactions.' },
+    { img: '/analytics_bg.webp', title: 'Global Node Oversight', desc: 'Real-time telemetry and network monitoring.' },
+    { img: '/analytics_bg.webp', title: 'Compute Core Performance', desc: 'NVMe storage and high-bandwidth processing.' },
+    { img: '/analytics_bg.webp', title: 'Security Protocol Layer', desc: 'DDoS mitigation and encrypted transactions.' },
   ];
 
   useEffect(() => {
@@ -27,7 +27,10 @@ export function LandingView() {
         {/* Matrix Analytic Background */}
         <div className="absolute inset-0 z-0">
            <img 
-            src="/analytics_bg.png" 
+            src="/analytics_bg.webp" 
+            fetchPriority="high"
+            width={1024}
+            height={1024}
             className="w-full h-full object-cover opacity-[0.05] dark:opacity-[0.1] grayscale brightness-150 mix-blend-overlay" 
             alt="Matrix Background"
           />

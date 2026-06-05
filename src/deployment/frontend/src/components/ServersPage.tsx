@@ -26,7 +26,7 @@ export function ServersPage({ servers, token, fetchData, showAlert, showConfirm,
         {/* Matrix Analytic Background */}
         <div className="absolute inset-0 z-0">
            <img 
-             src="/analytics_bg.png" 
+             src="/analytics_bg.webp" 
              className="w-full h-full object-cover opacity-[var(--matrix-opacity)] grayscale brightness-150 mix-blend-[var(--matrix-blend)] hover:scale-110 transition-transform duration-[20s] ease-linear" 
              alt="Matrix Background"
            />
@@ -101,7 +101,7 @@ export function ServersPage({ servers, token, fetchData, showAlert, showConfirm,
       {/* Analytics Banner */}
       <div className="relative w-full h-80 rounded-[3rem] overflow-hidden mb-12 bg-[var(--surface)] border border-[var(--border)] shadow-[var(--card-shadow)] group">
         <img 
-          src="/analytics_bg.png" 
+          src="/analytics_bg.webp" 
           alt="Network Analytics" 
           className="w-full h-full object-cover opacity-[var(--matrix-opacity)] grayscale brightness-150 mix-blend-[var(--matrix-blend)] transition-transform duration-[30s] group-hover:scale-125" 
         />

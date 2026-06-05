@@ -18,7 +18,7 @@ export function MarketplacePage({ plans, onSelect, exchangeRate }: MarketplacePr
         {/* Matrix Analytic Background */}
         <div className="absolute inset-0 z-0">
           <img 
-            src="/analytics_bg.png" 
+            src="/analytics_bg.webp" 
             className="w-full h-full object-cover opacity-[var(--matrix-opacity)] grayscale brightness-150 mix-blend-[var(--matrix-blend)] hover:scale-110 transition-transform duration-[20s] ease-linear" 
             alt="Matrix Background"
           />
