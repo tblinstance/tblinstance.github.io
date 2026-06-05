@@ -184,8 +184,12 @@ function App() {
                     className="w-full bg-[var(--surface-2)] border border-[var(--border)] rounded-2xl py-3 pl-11 pr-4 text-xs font-bold text-[var(--text-main)] outline-none focus:border-[var(--primary-transparent-border)] focus:shadow-[0_0_20px_rgba(var(--primary-rgb),0.05)] transition-all placeholder:opacity-30"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
-                        const query = (e.target as HTMLInputElement).value;
-                        if(query) showAlert('Global Search', `Searching cross-platform entities for "${query}"...`);
+                        const query = (e.target as HTMLInputElement).value.trim();
+                        if (query) {
+                          const googleUrl = `https://search.google.com/search?q=${encodeURIComponent(query)}`;
+                          window.open(googleUrl, '_blank');
+                          showAlert('Google Search', `Searching Google for "${query}"...`);
+                        }
                       }
                     }}
                   />
