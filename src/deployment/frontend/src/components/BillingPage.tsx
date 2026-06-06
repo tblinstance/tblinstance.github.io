@@ -5,10 +5,8 @@ interface Props {
   balance: number;
   balanceUsd: number;
   exchangeRate: number;
-  transactions: any[];
   depositAmount: string;
   setDepositAmount: (v: string) => void;
-  setTransactions: (v: any[]) => void;
   token: string | null;
   email: string;
   profile_image: string | null;
@@ -21,11 +19,34 @@ interface Props {
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 
-export function BillingPage({ balance, balanceUsd, exchangeRate, transactions, depositAmount, setDepositAmount, setTransactions, token, email, profile_image, showAlert, showConfirm, onDeposit, isStaff, onSyncRate }: Props) {
+export function BillingPage({ balance, balanceUsd, exchangeRate, depositAmount, setDepositAmount, token, email, profile_image, showAlert, showConfirm, onDeposit, isStaff, onSyncRate }: Props) {
   const [txnId, setTxnId] = React.useState('');
   const [selectedMethod] = React.useState('bKash/Nagad/Rocket');
   const [screenshot, setScreenshot] = React.useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [logs, setLogs] = React.useState<any[]>([]);
+  const [loadingLogs, setLoadingLogs] = React.useState(true);
+
+  const fetchLogs = React.useCallback(async () => {
+    setLoadingLogs(true);
+    try {
+      const endpoint = isStaff ? 'admin/all-transactions' : 'transactions';
+      const res = await axios.get(`${API_BASE}/${endpoint}/`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setLogs(res.data);
+    } catch (err) {
+      console.error('Failed to fetch billing logs:', err);
+    } finally {
+      setLoadingLogs(false);
+    }
+  }, [token, isStaff]);
+
+  React.useEffect(() => {
+    if (token) {
+      fetchLogs();
+    }
+  }, [fetchLogs, token]);
 
   const handleManualSubmit = async () => {
     if (!depositAmount || !txnId) {
@@ -144,7 +165,7 @@ export function BillingPage({ balance, balanceUsd, exchangeRate, transactions, d
         <div className="relative z-10 flex flex-wrap gap-4 mt-12 pt-8 border-t border-[var(--border)] opacity-80">
           {[
             { label: 'Wallet Balance', value: `${balance} BDT`, icon: 'account_balance_wallet', color: 'var(--primary)' },
-            { label: 'Total History', value: transactions.length, icon: 'analytics', color: 'var(--success)' },
+            { label: 'Total History', value: logs.length, icon: 'analytics', color: 'var(--success)' },
             { label: 'SSL Encrypted', value: 'Secured', icon: 'verified', color: 'var(--warning)' },
           ].map((stat, i) => (
             <div key={i} className="px-6 py-4 bg-[var(--surface-2)] rounded-2xl border border-[var(--border)] flex items-center gap-4 group hover:bg-[var(--surface)] hover:border-[var(--primary-transparent-border)] transition-all cursor-default shadow-sm flex-1 min-w-[200px]">
@@ -285,59 +306,91 @@ export function BillingPage({ balance, balanceUsd, exchangeRate, transactions, d
           </div>
         </div>
 
-        {/* Transaction History */}
+        {/* Billing Activity Ledger */}
         <div className="card p-10 flex flex-col">
           <div className="flex justify-between items-center mb-8">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-[var(--primary-transparent)] text-[var(--primary)] flex items-center justify-center border border-[var(--primary-transparent-border)]">
-                <span className="icon text-2xl">analytics</span>
+                <span className="icon text-2xl">history_edu</span>
               </div>
-              <h3 className="text-2xl font-black m-0 tracking-tight">Transaction History</h3>
+              <h3 className="text-2xl font-black m-0 tracking-tight">Billing Activity</h3>
             </div>
             
-            {transactions.length > 0 && (
+            <div className="flex items-center gap-2">
               <button 
-                onClick={() => showConfirm('Clear History', 'Are you sure you want to permanently clear your transaction history?', async () => {
-                  try {
-                    await axios.post(`${API_BASE}/transactions/clear/`, {}, { headers: { Authorization: `Bearer ${token}` } });
-                    setTransactions([]);
-                    showAlert('Success', 'Transaction history cleared.');
-                  } catch { showAlert('Error', 'Failed to clear transactions.'); }
-                })} 
-                className="btn btn-ghost btn-sm text-[var(--danger)] hover:bg-[var(--danger-transparent)] px-4"
+                onClick={fetchLogs}
+                disabled={loadingLogs}
+                className="btn btn-ghost btn-sm px-2 text-[var(--text-muted)] hover:text-[var(--text-main)]"
+                title="Refresh Logs"
               >
-                Clear
+                <span className={`icon text-lg ${loadingLogs ? 'animate-spin' : ''}`}>refresh</span>
               </button>
-            )}
+
+              {!isStaff && logs.length > 0 && (
+                <button 
+                  onClick={() => showConfirm('Clear History', 'Are you sure you want to permanently clear your transaction history?', async () => {
+                    try {
+                      await axios.post(`${API_BASE}/transactions/clear/`, {}, { headers: { Authorization: `Bearer ${token}` } });
+                      setLogs([]);
+                      showAlert('Success', 'Transaction history cleared.');
+                    } catch { showAlert('Error', 'Failed to clear transactions.'); }
+                  })} 
+                  className="btn btn-ghost btn-sm text-[var(--danger)] hover:bg-[var(--danger-transparent)] px-4"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
           </div>
           
-          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar max-h-[300px]">
-            {transactions.length === 0 ? (
+          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar max-h-[350px]">
+            {loadingLogs ? (
+              <div className="h-full flex flex-col items-center justify-center py-12 opacity-50">
+                 <div className="w-8 h-8 border-3 border-[var(--primary)] border-t-transparent rounded-full animate-spin mb-3" />
+                 <p className="font-bold tracking-widest text-[0.6rem] uppercase">Retrieving Ledger...</p>
+              </div>
+            ) : logs.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-[var(--text-muted)] gap-4 py-12">
                 <span className="icon text-5xl opacity-20">receipt_long</span>
-                <p className="italic font-medium">No recent transactions found.</p>
+                <p className="italic font-medium">No recent billing activity found.</p>
               </div>
             ) : (
-              <div className="grid gap-1">
-                {transactions.map((t: any, i: number) => {
-                  const isDeduction = t.type === 'PURCHASE' || t.type === 'SPEND';
+              <div className="grid gap-1.5">
+                {logs.map((log: any, i: number) => {
+                  const isDeduction = log.type === 'PURCHASE' || log.type === 'SPEND';
                   return (
-                    <div key={i} className="flex justify-between items-center p-5 rounded-2xl hover:bg-[var(--surface-2)] transition-colors border border-transparent hover:border-[var(--border)] shadow-sm">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isDeduction ? 'bg-[var(--danger-transparent)] text-[var(--danger)]' : 'bg-[var(--success-transparent)] text-[var(--success)]'}`}>
-                          <span className="icon text-sm">{isDeduction ? 'remove' : 'add'}</span>
+                    <div key={i} className="flex justify-between items-center p-4 rounded-2xl hover:bg-[var(--surface-2)] transition-colors border border-transparent hover:border-[var(--border)] shadow-sm">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                          log.type === 'DEPOSIT' ? 'bg-green-500/10 text-green-500' : 
+                          isDeduction ? 'bg-blue-500/10 text-blue-500' : 
+                          'bg-[var(--primary-transparent)] text-[var(--primary)]'
+                        }`}>
+                          <span className="icon text-sm">
+                            {log.type === 'DEPOSIT' ? 'add_card' : isDeduction ? 'shopping_cart' : 'history_edu'}
+                          </span>
                         </div>
-                        <div>
-                          <div className="font-bold text-[var(--text-main)] mb-0.5">{t.type}</div>
-                          <div className="text-xs text-[var(--text-muted)] font-bold">{new Date(t.created_at || Date.now()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
+                            <span className="font-bold text-xs text-[var(--text-main)] uppercase tracking-wide">{log.type}</span>
+                            {log.user_email && (
+                              <span className="px-1.5 py-0.5 rounded bg-[var(--primary-transparent)] text-[var(--primary)] text-[0.55rem] font-bold truncate max-w-[120px]" title={log.user_email}>
+                                {log.user_email}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[0.65rem] text-[var(--text-muted)] font-medium truncate max-w-[200px]" title={log.message || `Transaction ${log.transaction_id || log.id}`}>
+                            {log.message || `Transaction ${log.transaction_id || log.id}`}
+                          </div>
+                          <div className="text-[0.6rem] text-[var(--text-muted)] font-bold">{new Date(log.created_at || Date.now()).toLocaleString()}</div>
                         </div>
                       </div>
-                      <div className="flex flex-col items-end gap-1">
-                        <div className={`px-4 py-2 rounded-xl font-black text-lg tracking-tight ${isDeduction ? 'bg-[var(--danger-transparent)] text-[var(--danger)]' : 'bg-[var(--success-transparent)] text-[var(--success)]'}`}>
-                          {isDeduction ? '-' : '+'}{t.amount} <span className="text-xs font-bold ml-0.5">BDT</span>
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        <div className={`px-3 py-1.5 rounded-lg font-black text-sm tracking-tight ${isDeduction ? 'bg-[var(--danger-transparent)] text-[var(--danger)]' : 'bg-[var(--success-transparent)] text-[var(--success)]'}`}>
+                          {isDeduction ? '-' : '+'}{log.amount} <span className="text-[0.6rem] font-bold ml-0.5">BDT</span>
                         </div>
-                        <div className="text-[0.65rem] font-bold text-[var(--text-muted)] uppercase tracking-tighter px-1">
-                          ≈ ${parseFloat((t.amount / exchangeRate).toFixed(2))} USD
+                        <div className="text-[0.55rem] font-bold text-[var(--text-muted)] uppercase tracking-tighter px-1">
+                          ≈ ${parseFloat((log.amount / exchangeRate).toFixed(2))} USD
                         </div>
                       </div>
                     </div>

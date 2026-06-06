@@ -6,6 +6,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'email', 'balance', 'phone_number', 'is_staff', 'is_superuser', 'is_active', 'date_joined', 'profile_image', 'two_factor_enabled']
         read_only_fields = ['id', 'date_joined']
+        ref_name = 'TblincUser'
 
 from djoser.serializers import UserCreateSerializer
 

@@ -24,8 +24,8 @@ import { DNSZonesPage } from './components/DNSZonesPage';
 import { LoadBalancersPage } from './components/LoadBalancersPage';
 import { FirewallsPage } from './components/FirewallsPage';
 import { SnapshotsPage } from './components/SnapshotsPage';
-import { ActivityLogsPage } from './components/ActivityLogsPage';
 import { BroadcastPage } from './components/BroadcastPage';
+import { ActivityLogsPage } from './components/ActivityLogsPage';
 import { ApiDiagnosticsPage } from './components/ApiDiagnosticsPage';
 import { InfraMapPage } from './components/InfraMapPage';
 import { QuotasPage } from './components/QuotasPage';
@@ -53,9 +53,9 @@ function App() {
     sidebarOpen, setSidebarOpen, isMobile, theme, toggleTheme,
     fetchData, fetchPublicPlans, balance, notifications,
     setNotifyOpen, setSelectedPlan, setActiveTab, handleOrder,
-    depositAmount, setDepositAmount, setTransactions, handleDeposit,
+    depositAmount, setDepositAmount, handleDeposit,
     showAlert, showConfirm, showPromptUI, email, users, manualRequests,
-    servers, plans, transactions, handleSyncRate
+    servers, plans, handleSyncRate
   } = store;
 
   useEffect(() => {
@@ -214,8 +214,7 @@ function App() {
                 { id: 'dns_management', icon: 'public', label: 'Global DNS' },
                 { id: 'dns_zones', icon: 'language', label: 'DNS Zones' },
                 { id: 'snapshots', icon: 'camera', label: 'Snapshots' },
-                { id: 'activity_logs', icon: 'history_edu', label: 'Activity Logs' },
-                { id: 'billing', icon: 'account_balance_wallet', label: 'Financial Billing' },
+                { id: 'billing', icon: 'account_balance_wallet', label: 'TBLINC Billings' },
               ].map((item) => (
                 <button
                   key={item.id}
@@ -298,6 +297,7 @@ function App() {
 
           {sidebarOpen && <div className="px-4 mt-6 mb-2 text-[0.6rem] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] opacity-50">Personal</div>}
           {[
+            { id: 'account', icon: 'manage_accounts', label: 'Account' },
             { id: 'settings', icon: 'settings', label: 'Settings' },
           ].map(item => (
             <button
@@ -494,8 +494,7 @@ function App() {
           {activeTab === 'load_balancers' && <LoadBalancersPage />}
           {activeTab === 'firewalls' && <FirewallsPage />}
           {activeTab === 'snapshots' && <SnapshotsPage />}
-          {activeTab === 'activity_logs' && <ActivityLogsPage />}
-          {activeTab === 'billing' && <BillingPage balance={balance} balanceUsd={store.balanceUsd} exchangeRate={store.exchangeRate} transactions={transactions} depositAmount={depositAmount} setDepositAmount={setDepositAmount} setTransactions={setTransactions} token={token} email={email} profile_image={store.profile_image} showAlert={showAlert} showConfirm={showConfirm} onDeposit={handleDeposit} isStaff={isStaff} onSyncRate={handleSyncRate} />}
+          {activeTab === 'billing' && <BillingPage balance={balance} balanceUsd={store.balanceUsd} exchangeRate={store.exchangeRate} depositAmount={depositAmount} setDepositAmount={setDepositAmount} token={token} email={email} profile_image={store.profile_image} showAlert={showAlert} showConfirm={showConfirm} onDeposit={handleDeposit} isStaff={isStaff} onSyncRate={handleSyncRate} />}
           {activeTab === 'admin_dashboard' && isStaff && (
             <AdminDashboard
               token={token}
@@ -545,7 +544,8 @@ function App() {
           {activeTab === 'infra_map' && isStaff && <InfraMapPage stats={store.adminStats} />}
           {activeTab === 'quotas' && isStaff && <QuotasPage />}
           {activeTab === 'system_settings' && isStaff && <SystemSettingsPage token={token} showAlert={showAlert} />}
-          {activeTab === 'settings' && <SettingsPage email={email} isStaff={isStaff} profile_image={store.profile_image} two_factor_enabled={store.two_factor_enabled} exchangeRate={store.exchangeRate} onSyncRate={handleSyncRate} showConfirm={showConfirm} onImageUpload={store.uploadImage} generate2FA={store.generate2FA} enable2FA={store.enable2FA} disable2FA={store.disable2FA} />}
+          {activeTab === 'activity_logs' && isStaff && <ActivityLogsPage />}
+          {(activeTab === 'settings' || activeTab === 'account') && <SettingsPage email={email} isStaff={isStaff} profile_image={store.profile_image} two_factor_enabled={store.two_factor_enabled} exchangeRate={store.exchangeRate} onSyncRate={handleSyncRate} showConfirm={showConfirm} onImageUpload={store.uploadImage} generate2FA={store.generate2FA} enable2FA={store.enable2FA} disable2FA={store.disable2FA} />}
         </main>
 
         {/* Mobile Bottom Tab Bar */}

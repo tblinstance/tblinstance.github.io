@@ -115,36 +115,35 @@ class ContaboAPI:
 
     # --- DNS MANAGEMENT ---
     def list_dns_zones(self):
-        url = "https://api.contabo.com/v1/dns"
+        url = "https://api.contabo.com/v1/dns/zones"
         response = requests.get(url, headers=self._get_headers())
         response.raise_for_status()
         return response.json()
 
     def list_dns_records(self, zoneId):
-        url = f"https://api.contabo.com/v1/dns/{zoneId}/records"
+        url = f"https://api.contabo.com/v1/dns/zones/{zoneId}/records"
         response = requests.get(url, headers=self._get_headers())
         response.raise_for_status()
         return response.json()
 
     # --- FIREWALLS ---
     def list_firewalls(self):
-        url = "https://api.contabo.com/v1/compute/firewalls"
+        url = "https://api.contabo.com/v1/firewalls"
         response = requests.get(url, headers=self._get_headers())
         response.raise_for_status()
         return response.json()
 
     # --- SNAPSHOTS ---
-    def list_all_snapshots(self):
-        """List snapshots across all instances via audit history or iterate instances"""
-        # For simplicity, we'll list audits which contains snapshot info
-        url = "https://api.contabo.com/v1/compute/snapshots/audits"
+    def list_instance_snapshots(self, instanceId):
+        """List snapshots for a specific instance."""
+        url = f"https://api.contabo.com/v1/compute/instances/{instanceId}/snapshots"
         response = requests.get(url, headers=self._get_headers())
         response.raise_for_status()
         return response.json()
 
-    # --- LOAD BALANCERS ---
+    # --- LOAD BALANCERS (Virtual IPs) ---
     def list_load_balancers(self):
-        url = "https://api.contabo.com/v1/compute/load-balancers"
+        url = "https://api.contabo.com/v1/vips"
         response = requests.get(url, headers=self._get_headers())
         response.raise_for_status()
         return response.json()

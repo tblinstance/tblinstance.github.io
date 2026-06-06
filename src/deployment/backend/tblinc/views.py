@@ -108,6 +108,8 @@ class ServerViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False) or self.request.user.is_anonymous:
+            return Server.objects.none()
         if self.request.user.is_staff:
             return Server.objects.all()
         return Server.objects.filter(user=self.request.user)
@@ -133,6 +135,8 @@ class TransactionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False) or self.request.user.is_anonymous:
+            return Transaction.objects.none()
         return Transaction.objects.filter(user=self.request.user)
 
 class ManualPaymentRequestViewSet(viewsets.ModelViewSet):
@@ -141,6 +145,8 @@ class ManualPaymentRequestViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False) or self.request.user.is_anonymous:
+            return ManualPaymentRequest.objects.none()
         if self.request.user.is_staff:
             return ManualPaymentRequest.objects.all()
         return ManualPaymentRequest.objects.filter(user=self.request.user)
@@ -169,6 +175,8 @@ class NotificationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False) or self.request.user.is_anonymous:
+            return Notification.objects.none()
         return Notification.objects.filter(user=self.request.user)
 
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
@@ -283,7 +291,7 @@ def list_servers(request):
                 ipv6 = None
                 ip_config = s.get('ipConfig')
                 if ip_config:
-                    ipv4 = ip_config.get('v4', {}).get('ip')
+                    ipv4 = (ip_config.get('v4') or {}).get('ip')
                     v6_list = ip_config.get('v6', [])
                     if v6_list and len(v6_list) > 0:
                         ipv6 = v6_list[0].get('ip')
@@ -616,7 +624,7 @@ def create_order(request):
                     user=user,
                     contabo_id=instance_data.get('instanceId', 'PENDING'),
                     name=custom_name,
-                    ip_address=instance_data.get('ipConfig', {}).get('v4', {}).get('ip', 'ALLOCATING'),
+                    ip_address=((instance_data.get('ipConfig') or {}).get('v4') or {}).get('ip') or 'ALLOCATING',
                     status='PROVISIONING',
                     product_id=plan_id,
                     plan_price=price_bdt,
@@ -1104,13 +1112,21 @@ def payment_success(request):
             UBUNTU_IMAGE_UUID = "afecbb85-e2fc-46f0-9684-b46b1faf00bb"
             import secrets
             import string
-            root_pass = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(16))
+            root_pass = ''.join(secrets.choice(string.ascii_letters + string.digits + "!@#$") for _ in range(16))
+            root_pass += "A1!"  # Ensure complexity
 
+            # STEP 1: Create a Contabo secret for the password
+            secret_id = get_contabo().create_secret(
+                name=f"PASS-TBLINC-{payment.plan_id}-{payment.user.id}",
+                value=root_pass
+            )
+
+            # STEP 2: Provision the instance with the secret ID
             res = get_contabo().create_instance(
                 productId=payment.plan_id,
                 region="EU",
                 imageId=UBUNTU_IMAGE_UUID,
-                rootPassword=root_pass,
+                rootPasswordId=secret_id,
                 displayName=f"TBLINC-{payment.plan_id}-{payment.user.id}"
             )
             
@@ -1120,7 +1136,7 @@ def payment_success(request):
                 user=payment.user,
                 contabo_id=instance_data.get('instanceId', 'PENDING'),
                 name=f"VPS {payment.plan_id}",
-                ip_address=instance_data.get('ipConfig', {}).get('v4', {}).get('ip', 'ALLOCATING'),
+                ip_address=((instance_data.get('ipConfig') or {}).get('v4') or {}).get('ip') or 'ALLOCATING',
                 status='PROVISIONING',
                 product_id=payment.plan_id,
                 plan_price=payment.amount_bdt,
@@ -1337,54 +1353,71 @@ def admin_delete_suspended_server(request):
 @permission_classes([IsAdminUser])
 def admin_deploy_for_user(request):
     user_id = request.data.get('user_id')
-    plan_id = request.data.get('plan_id')
-    region = request.data.get('region', 'fra1')
-    image = request.data.get('image', 'ubuntu-22.04')
+    plan_id = request.data.get('plan_id')   # e.g. 'V91', 'V94'
+    region = request.data.get('region', 'EU')
+    image = request.data.get('image', 'afecbb85-e2fc-46f0-9684-b46b1faf00bb')  # Ubuntu 22.04 UUID
     name = request.data.get('name', f"admin-deploy-{str(uuid.uuid4())[:8]}")
     root_pass = request.data.get('root_pass')
     
     if not all([user_id, plan_id, root_pass]):
-        return Response({"error": "Missing parameters"}, status=400)
+        return Response({"error": "Missing required parameters: user_id, plan_id, root_pass"}, status=400)
         
     try:
         user = User.objects.get(id=user_id)
-        plan = Product.objects.get(id=plan_id) # Product is the plan model
-        
-        # Deploy on Contabo
-        response = get_contabo().create_instance(
-            name=name,
-            product_id=plan.product_id,
-            region=region,
-            image_id=image,
-            root_password=root_pass
+
+        # Create a Contabo secret for the password
+        secret_id = get_contabo().create_secret(
+            name=f"PASS-ADMIN-{name}",
+            value=root_pass
         )
+
+        # Deploy on Contabo
+        res = get_contabo().create_instance(
+            productId=plan_id,
+            region=region,
+            imageId=image,
+            rootPasswordId=secret_id,
+            displayName=name
+        )
+
+        instance_data = res.get('data', [{}])[0]
+        instance_id = instance_data.get('instanceId', 'PENDING')
+        ip_address = ((instance_data.get('ipConfig') or {}).get('v4') or {}).get('ip') or 'ALLOCATING'
         
-        if 'error' in response:
-            return Response({"error": response['error']}, status=400)
-            
-        instance_id = response.get('instanceId')
-        
+        # Calculate plan price from base prices
+        base_usd_prices = {
+            'V91': 4.80, 'V94': 7.50, 'V97': 15.00, 'V100': 27.00,
+            'VDS-S': 37.00, 'VDS-M': 49.00, 'VDS-L': 74.00, 'VDS-XL': 98.00, 'VDS-XXL': 147.00,
+            'DED-XEON': 38.00, 'DED-RYZEN': 92.00, 'DED-EPYC16': 123.00, 'DED-EPYC32': 292.00,
+        }
+        rate_setting = SystemSetting.objects.filter(key='bdt_usd_rate').first()
+        rate = float(rate_setting.value) if rate_setting else 120.0
+        price_bdt = int(base_usd_prices.get(plan_id, 0) * rate)
+
         # Create server in DB
         server = Server.objects.create(
             user=user,
             name=name,
             contabo_id=instance_id,
-            status='ACTIVE',
-            plan_name=plan.name,
-            plan_price=plan.price_bdt,
-            vcpus=plan.vcpus,
-            ram=plan.ram,
-            storage=plan.storage,
-            region=region,
-            product_id=plan.product_id,
+            ip_address=ip_address,
+            status='PROVISIONING',
+            product_id=plan_id,
+            plan_price=price_bdt,
             expires_at=timezone.now() + timedelta(days=30)
         )
         
-        return Response({"message": "Deployment initiated.", "server_id": server.id})
+        Notification.objects.create(
+            user=user,
+            title="Server Deployed by Admin",
+            message=f"An admin has deployed '{name}' for your account.",
+            type="info"
+        )
+        
+        return Response({"message": "Deployment initiated.", "server_id": server.id, "contabo_id": instance_id})
     except User.DoesNotExist:
         return Response({"error": "User not found"}, status=404)
-    except Product.DoesNotExist:
-        return Response({"error": "Plan not found"}, status=404)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
 
 @api_view(['POST'])
 @permission_classes([IsAdminUser])
@@ -1738,7 +1771,20 @@ def mark_chat_read(request):
 def list_object_storages(request):
     try:
         res = get_contabo().list_object_storages()
-        return Response(res.get('data', []))
+        mapped = []
+        for s in res.get('data', []):
+            total_gb = s.get('totalPurchasedSpaceTB', 0) * 1024  # convert TB → GB
+            used_gb = s.get('usedSpaceGb', 0) or 0
+            mapped.append({
+                'storageId': str(s.get('objectStorageId', '')),
+                'displayName': s.get('displayName') or s.get('objectStorageId', 'Storage Cluster'),
+                'region': s.get('region', 'EU'),
+                'provisioningStatus': s.get('status', 'unknown'),
+                's3Url': s.get('s3Url') or s.get('s3TenantId', ''),
+                'totalSpaceGb': round(float(total_gb), 1),
+                'usedSpaceGb': round(float(used_gb), 1),
+            })
+        return Response(mapped)
     except Exception as e:
         return Response({"error": str(e)}, status=500)
 
@@ -1747,7 +1793,17 @@ def list_object_storages(request):
 def list_private_networks(request):
     try:
         res = get_contabo().list_private_networks()
-        return Response(res.get('data', []))
+        mapped = []
+        for n in res.get('data', []):
+            mapped.append({
+                'privateNetworkId': str(n.get('privateNetworkId', '')),
+                'name': n.get('name', 'Unnamed Network'),
+                'region': n.get('region', 'EU'),
+                'description': n.get('description', ''),
+                'createdDate': n.get('createdDate', ''),
+                'instanceIds': n.get('instanceIds', []),
+            })
+        return Response(mapped)
     except Exception as e:
         return Response({"error": str(e)}, status=500)
 
@@ -1756,7 +1812,15 @@ def list_private_networks(request):
 def list_dns_zones(request):
     try:
         res = get_contabo().list_dns_zones()
-        return Response(res.get('data', []))
+        mapped = []
+        for zone in res.get('data', []):
+            mapped.append({
+                'zoneId': zone.get('zoneName'),
+                'domainName': zone.get('zoneName'),
+                'description': f"DNS zone for {zone.get('zoneName')}",
+                'createdDate': timezone.now().isoformat()
+            })
+        return Response(mapped)
     except Exception as e:
         return Response({"error": str(e)}, status=500)
 
@@ -1765,7 +1829,16 @@ def list_dns_zones(request):
 def list_dns_records(request, zone_id):
     try:
         res = get_contabo().list_dns_records(zone_id)
-        return Response(res.get('data', []))
+        mapped = []
+        for record in res.get('data', []):
+            mapped.append({
+                'id': str(record.get('recordId')),
+                'name': record.get('name'),
+                'type': record.get('type'),
+                'data': record.get('data'),
+                'ttl': record.get('ttl')
+            })
+        return Response(mapped)
     except Exception as e:
         return Response({"error": str(e)}, status=500)
 
@@ -1774,7 +1847,16 @@ def list_dns_records(request, zone_id):
 def list_firewalls(request):
     try:
         res = get_contabo().list_firewalls()
-        return Response(res.get('data', []))
+        mapped = []
+        for fw in res.get('data', []):
+            mapped.append({
+                'firewallId': fw.get('firewallId'),
+                'name': fw.get('name'),
+                'description': fw.get('description'),
+                'isDefault': fw.get('name') == 'default',
+                'createdDate': fw.get('createdDate')
+            })
+        return Response(mapped)
     except Exception as e:
         return Response({"error": str(e)}, status=500)
 
@@ -1782,8 +1864,31 @@ def list_firewalls(request):
 @permission_classes([IsAuthenticated])
 def list_snapshots(request):
     try:
-        res = get_contabo().list_all_snapshots()
-        return Response(res.get('data', []))
+        # Fetch snapshots per instance via contabo instances list
+        import requests as req
+        headers = get_contabo()._get_headers()
+        instances_res = req.get('https://api.contabo.com/v1/compute/instances', headers=headers)
+        instances = instances_res.json().get('data', []) if instances_res.status_code == 200 else []
+        
+        all_snapshots = []
+        for instance in instances:
+            iid = instance.get('instanceId')
+            snap_res = req.get(
+                f'https://api.contabo.com/v1/compute/instances/{iid}/snapshots',
+                headers=get_contabo()._get_headers()
+            )
+            if snap_res.status_code == 200:
+                for snap in snap_res.json().get('data', []):
+                    all_snapshots.append({
+                        'snapshotId': str(snap.get('snapshotId', '')),
+                        'instanceId': iid,
+                        'name': snap.get('name', 'Untitled Snapshot'),
+                        'description': snap.get('description', ''),
+                        'createdDate': snap.get('createdDate', ''),
+                        'autoDeleteDate': snap.get('autoDeleteDate'),
+                        'status': snap.get('status', 'ready'),
+                    })
+        return Response(all_snapshots)
     except Exception as e:
         return Response({"error": str(e)}, status=500)
 
@@ -1792,7 +1897,17 @@ def list_snapshots(request):
 def list_load_balancers(request):
     try:
         res = get_contabo().list_load_balancers()
-        return Response(res.get('data', []))
+        mapped = []
+        for vip in res.get('data', []):
+            mapped.append({
+                'loadBalancerId': vip.get('vipId'),
+                'name': vip.get('resourceDisplayName') or vip.get('resourceName') or 'Unassigned VIP',
+                'status': 'ready' if vip.get('resourceId') else 'unassigned',
+                'ipAddress': (vip.get('v4') or {}).get('ip') or 'Allocating...',
+                'region': vip.get('region'),
+                'algorithm': vip.get('type', 'additional')
+            })
+        return Response(mapped)
     except Exception as e:
         return Response({"error": str(e)}, status=500)
 
