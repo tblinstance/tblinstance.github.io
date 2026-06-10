@@ -21,24 +21,45 @@ export function AdminDeployPage({ token, users, plans, showAlert, fetchData }: P
   const [selectedSSHKey, setSelectedSSHKey] = React.useState('');
   const [loading, setLoading] = React.useState(false);
 
+  const REGION_MAP: Record<string, string> = {
+    fra1: 'EU',
+    lon1: 'EU',
+    nyc1: 'US',
+    sin1: 'AS',
+  };
+
+  const IMAGE_MAP: Record<string, string> = {
+    'ubuntu-22.04': 'afecbb85-e2fc-46f0-9684-b46b1faf00bb',
+    'ubuntu-20.04': 'afecbb85-e2fc-46f0-9684-b46b1faf00bb',
+    'debian-11': 'afecbb85-e2fc-46f0-9684-b46b1faf00bb',
+    'centos-7': 'afecbb85-e2fc-46f0-9684-b46b1faf00bb',
+  };
 
   const handleDeploy = async () => {
-    if (!selectedUser || !selectedPlan || !serverName || !rootPass) {
+    if (!selectedUser || !selectedPlan || !serverName) {
       return showAlert('Error', 'Missing critical deployment parameters.');
     }
+    if (authProtocol === 'password' && !rootPass) {
+      return showAlert('Error', 'Root password is required for password-based deployment.');
+    }
+    if (authProtocol === 'ssh' && !selectedSSHKey) {
+      return showAlert('Error', 'Please select an SSH key for SSH-based deployment.');
+    }
+
+    const requestBody = {
+      user_id: selectedUser,
+      plan_id: selectedPlan.id,
+      region: REGION_MAP[selectedRegion] || selectedRegion,
+      image: IMAGE_MAP[selectedImage] || selectedImage,
+      name: serverName,
+      auth_protocol: authProtocol,
+      root_pass: rootPass || undefined,
+      ssh_key_id: selectedSSHKey || undefined,
+    };
 
     setLoading(true);
     try {
-      await axios.post(`${import.meta.env.VITE_API_BASE}/admin/deploy-for-user/`, {
-        user_id: selectedUser,
-        plan_id: selectedPlan.id,
-        region: selectedRegion,
-        image: selectedImage,
-        name: serverName,
-        auth_protocol: authProtocol,
-        root_pass: authProtocol === 'password' ? rootPass : null,
-        ssh_key_id: authProtocol === 'ssh' ? selectedSSHKey : null
-      }, {
+      await axios.post(`${import.meta.env.VITE_API_BASE}/admin/deploy-for-user/`, requestBody, {
         headers: { Authorization: `Bearer ${token}` }
       });
       showAlert('✅ Success', 'Direct Cloud Deployment initiated successfully.');

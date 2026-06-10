@@ -1,5 +1,6 @@
 import os
 import uuid
+import secrets
 from dotenv import load_dotenv
 load_dotenv()
 from decimal import Decimal
@@ -49,6 +50,31 @@ def get_contabo():
             require_env("CONTABO_API_PASS"),
         )
     return contabo
+
+
+def normalize_contabo_region(region: str) -> str:
+    region_map = {
+        'fra1': 'EU',
+        'lon1': 'EU',
+        'nyc1': 'US',
+        'sin1': 'AS',
+        'EU': 'EU',
+        'US': 'US',
+        'AS': 'AS',
+    }
+    return region_map.get(str(region or '').strip(), str(region or '').strip())
+
+
+def normalize_contabo_image(image: str) -> str:
+    image_map = {
+        'ubuntu-22.04': 'afecbb85-e2fc-46f0-9684-b46b1faf00bb',
+        'ubuntu-20.04': 'afecbb85-e2fc-46f0-9684-b46b1faf00bb',
+        'debian-11': 'afecbb85-e2fc-46f0-9684-b46b1faf00bb',
+        'centos-7': 'afecbb85-e2fc-46f0-9684-b46b1faf00bb',
+    }
+    normalized = str(image or '').strip()
+    return image_map.get(normalized, normalized)
+
 
 # SSLCommerz Credentials
 SSL_SETTINGS = {
@@ -525,8 +551,8 @@ def get_plans(request):
 def create_order(request):
     try:
         plan_id = request.data.get('plan_id')
-        selected_region = request.data.get('region', 'EU')
-        selected_image = request.data.get('image_id', 'afecbb85-e2fc-46f0-9684-b46b1faf00bb')
+        selected_region = normalize_contabo_region(request.data.get('region', 'EU'))
+        selected_image = normalize_contabo_image(request.data.get('image_id', 'afecbb85-e2fc-46f0-9684-b46b1faf00bb'))
         custom_name = request.data.get('custom_name') or request.data.get('name', f"TBLINC-{plan_id}")
         custom_password = request.data.get('custom_password') or request.data.get('root_pass')
         transaction_id = str(uuid.uuid4())[:16] 
@@ -871,7 +897,7 @@ def server_control(request, server_id):
         
         # Real Contabo API call
         if action == 'rebuild':
-            image_id = request.data.get('imageId', 'ubuntu-22.04') # Default
+            image_id = normalize_contabo_image(request.data.get('imageId', 'ubuntu-22.04')) # Default
             new_pass = request.data.get('password', 'DefaultPass123!')
             
             # Create a secret for the new password
@@ -1354,13 +1380,19 @@ def admin_delete_suspended_server(request):
 def admin_deploy_for_user(request):
     user_id = request.data.get('user_id')
     plan_id = request.data.get('plan_id')   # e.g. 'V91', 'V94'
-    region = request.data.get('region', 'EU')
-    image = request.data.get('image', 'afecbb85-e2fc-46f0-9684-b46b1faf00bb')  # Ubuntu 22.04 UUID
+    region = normalize_contabo_region(request.data.get('region', 'EU'))
+    image = normalize_contabo_image(request.data.get('image', 'afecbb85-e2fc-46f0-9684-b46b1faf00bb'))
     name = request.data.get('name', f"admin-deploy-{str(uuid.uuid4())[:8]}")
     root_pass = request.data.get('root_pass')
+    auth_protocol = request.data.get('auth_protocol', 'password')
+    ssh_key_id = request.data.get('ssh_key_id')
     
-    if not all([user_id, plan_id, root_pass]):
-        return Response({"error": "Missing required parameters: user_id, plan_id, root_pass"}, status=400)
+    if not user_id or not plan_id:
+        return Response({"error": "Missing required parameters: user_id, plan_id"}, status=400)
+    if auth_protocol == 'password' and not root_pass:
+        return Response({"error": "Missing required parameters for password auth: root_pass"}, status=400)
+    if auth_protocol == 'ssh' and not root_pass:
+        root_pass = secrets.token_urlsafe(16)
         
     try:
         user = User.objects.get(id=user_id)
@@ -1372,12 +1404,17 @@ def admin_deploy_for_user(request):
         )
 
         # Deploy on Contabo
+        kwargs = {}
+        if auth_protocol == 'ssh' and ssh_key_id:
+            kwargs['sshKeys'] = [ssh_key_id]
+
         res = get_contabo().create_instance(
             productId=plan_id,
             region=region,
             imageId=image,
             rootPasswordId=secret_id,
-            displayName=name
+            displayName=name,
+            **kwargs
         )
 
         instance_data = res.get('data', [{}])[0]
