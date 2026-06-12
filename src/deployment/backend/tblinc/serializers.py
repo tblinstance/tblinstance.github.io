@@ -13,7 +13,7 @@ from djoser.serializers import UserCreateSerializer
 class CustomUserCreateSerializer(UserCreateSerializer):
     class Meta(UserCreateSerializer.Meta):
         model = User
-        fields = ('id', 'email', 'password', 'first_name', 'last_name', 'phone_number', 'address', 'country')
+        fields = ('id', 'email', 'password', 're_password', 'first_name', 'last_name', 'phone_number', 'address', 'country')
 
 class ServerSerializer(serializers.ModelSerializer):
     user_email = serializers.ReadOnlyField(source='user.email')
