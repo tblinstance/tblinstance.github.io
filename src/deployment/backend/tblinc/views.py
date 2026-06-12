@@ -1802,29 +1802,46 @@ def google_oauth_callback(request):
         return redirect(_frontend_oauth_redirect_url('', '', 'google_oauth_code_missing'))
 
     redirect_uri = _build_oauth_callback_url('google')
-    token_res = requests.post(
-        'https://oauth2.googleapis.com/token',
-        data={
-            'code': code,
-            'client_id': settings.GOOGLE_OAUTH_CLIENT_ID,
-            'client_secret': settings.GOOGLE_OAUTH_CLIENT_SECRET,
-            'redirect_uri': redirect_uri,
-            'grant_type': 'authorization_code',
-        },
-        headers={'Content-Type': 'application/x-www-form-urlencoded'},
-        timeout=15,
-    )
-    token_data = token_res.json()
+    try:
+        token_res = requests.post(
+            'https://oauth2.googleapis.com/token',
+            data={
+                'code': code,
+                'client_id': settings.GOOGLE_OAUTH_CLIENT_ID,
+                'client_secret': settings.GOOGLE_OAUTH_CLIENT_SECRET,
+                'redirect_uri': redirect_uri,
+                'grant_type': 'authorization_code',
+            },
+            headers={'Content-Type': 'application/x-www-form-urlencoded'},
+            timeout=15,
+        )
+        token_res.raise_for_status()
+        token_data = token_res.json()
+    except requests.RequestException as exc:
+        error_text = getattr(exc.response, 'text', str(exc))
+        return redirect(_frontend_oauth_redirect_url('', '', f'google_token_exchange_failed:{error_text[:120]}'))
+    except ValueError:
+        return redirect(_frontend_oauth_redirect_url('', '', 'google_token_response_parse_failed'))
+
     access_token = token_data.get('access_token')
     if not access_token:
         return redirect(_frontend_oauth_redirect_url('', '', 'google_token_exchange_failed'))
 
-    user_info = requests.get(
-        'https://www.googleapis.com/oauth2/v1/userinfo',
-        params={'access_token': access_token},
-        headers={'Accept': 'application/json'},
-        timeout=15,
-    ).json()
+    try:
+        user_info_res = requests.get(
+            'https://www.googleapis.com/oauth2/v1/userinfo',
+            params={'access_token': access_token},
+            headers={'Accept': 'application/json'},
+            timeout=15,
+        )
+        user_info_res.raise_for_status()
+        user_info = user_info_res.json()
+    except requests.RequestException as exc:
+        error_text = getattr(exc.response, 'text', str(exc))
+        return redirect(_frontend_oauth_redirect_url('', '', f'google_userinfo_failed:{error_text[:120]}'))
+    except ValueError:
+        return redirect(_frontend_oauth_redirect_url('', '', 'google_userinfo_parse_failed'))
+
     email = user_info.get('email')
     verified_email = user_info.get('verified_email')
     if not email or not verified_email:
@@ -1859,42 +1876,68 @@ def github_oauth_callback(request):
         return redirect(_frontend_oauth_redirect_url('', '', 'github_oauth_code_missing'))
 
     redirect_uri = _build_oauth_callback_url('github')
-    token_res = requests.post(
-        'https://github.com/login/oauth/access_token',
-        data={
-            'client_id': settings.GITHUB_OAUTH_CLIENT_ID,
-            'client_secret': settings.GITHUB_OAUTH_CLIENT_SECRET,
-            'code': code,
-            'redirect_uri': redirect_uri,
-        },
-        headers={'Accept': 'application/json'},
-        timeout=15,
-    )
-    token_data = token_res.json()
+    try:
+        token_res = requests.post(
+            'https://github.com/login/oauth/access_token',
+            data={
+                'client_id': settings.GITHUB_OAUTH_CLIENT_ID,
+                'client_secret': settings.GITHUB_OAUTH_CLIENT_SECRET,
+                'code': code,
+                'redirect_uri': redirect_uri,
+            },
+            headers={'Accept': 'application/json'},
+            timeout=15,
+        )
+        token_res.raise_for_status()
+        token_data = token_res.json()
+    except requests.RequestException as exc:
+        error_text = getattr(exc.response, 'text', str(exc))
+        return redirect(_frontend_oauth_redirect_url('', '', f'github_token_exchange_failed:{error_text[:120]}'))
+    except ValueError:
+        return redirect(_frontend_oauth_redirect_url('', '', 'github_token_response_parse_failed'))
+
     access_token = token_data.get('access_token')
     if not access_token:
         return redirect(_frontend_oauth_redirect_url('', '', 'github_token_exchange_failed'))
 
-    user_info = requests.get(
-        'https://api.github.com/user',
-        headers={
-            'Authorization': f'token {access_token}',
-            'Accept': 'application/vnd.github+json',
-            'User-Agent': 'TBLINC',
-        },
-        timeout=15,
-    ).json()
-    email = user_info.get('email')
-    if not email:
-        emails_info = requests.get(
-            'https://api.github.com/user/emails',
+    try:
+        user_info_res = requests.get(
+            'https://api.github.com/user',
             headers={
                 'Authorization': f'token {access_token}',
                 'Accept': 'application/vnd.github+json',
                 'User-Agent': 'TBLINC',
             },
             timeout=15,
-        ).json()
+        )
+        user_info_res.raise_for_status()
+        user_info = user_info_res.json()
+    except requests.RequestException as exc:
+        error_text = getattr(exc.response, 'text', str(exc))
+        return redirect(_frontend_oauth_redirect_url('', '', f'github_userinfo_failed:{error_text[:120]}'))
+    except ValueError:
+        return redirect(_frontend_oauth_redirect_url('', '', 'github_userinfo_parse_failed'))
+
+    email = user_info.get('email')
+    if not email:
+        try:
+            emails_info_res = requests.get(
+                'https://api.github.com/user/emails',
+                headers={
+                    'Authorization': f'token {access_token}',
+                    'Accept': 'application/vnd.github+json',
+                    'User-Agent': 'TBLINC',
+                },
+                timeout=15,
+            )
+            emails_info_res.raise_for_status()
+            emails_info = emails_info_res.json()
+        except requests.RequestException as exc:
+            error_text = getattr(exc.response, 'text', str(exc))
+            return redirect(_frontend_oauth_redirect_url('', '', f'github_emails_failed:{error_text[:120]}'))
+        except ValueError:
+            return redirect(_frontend_oauth_redirect_url('', '', 'github_emails_parse_failed'))
+
         if isinstance(emails_info, list):
             primary = next((item for item in emails_info if item.get('primary') and item.get('verified')), None)
             email = primary.get('email') if primary else None
