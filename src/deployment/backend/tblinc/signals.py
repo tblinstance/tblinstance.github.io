@@ -52,7 +52,8 @@ def send_admin_approval_email(sender, instance, created, **kwargs):
 
         approval_url = f"{backend_root}/api/admin/approve-link/{uid}/{token}/"
         
-        admin_email = os.environ.get('EMAIL_HOST_USER')
+        # Prefer explicit EMAIL_HOST_USER, fall back to configured admin address
+        admin_email = os.environ.get('EMAIL_HOST_USER', 'tblinc810@gmail.com')
         if admin_email:
             send_mail(
                 subject=f'New User Registration: {instance.email}',
