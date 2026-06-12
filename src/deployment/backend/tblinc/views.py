@@ -29,6 +29,14 @@ import pyotp
 import qrcode
 import io
 import base64
+
+class BulkDeleteMixin:
+    @action(detail=False, methods=['delete'], permission_classes=[IsAdminUser])
+    def delete_all(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        count = queryset.count()
+        queryset.delete()
+        return Response({"message": f"Deleted {count} records."}, status=status.HTTP_200_OK)
 from django.utils import timezone
 from datetime import timedelta
 import requests
@@ -93,7 +101,7 @@ PAYPAL_SECRET = os.environ.get("PAYPAL_SECRET")
 PAYPAL_API_BASE = "https://api-m.sandbox.paypal.com" if os.environ.get("PAYPAL_MODE") == "sandbox" else "https://api-m.paypal.com"
 
 # ViewSets
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(BulkDeleteMixin, viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAdminUser]
@@ -130,7 +138,7 @@ class UserViewSet(viewsets.ModelViewSet):
         user.save()
         return Response({"is_active": user.is_active})
 
-class ServerViewSet(viewsets.ModelViewSet):
+class ServerViewSet(BulkDeleteMixin, viewsets.ModelViewSet):
     queryset = Server.objects.all()
     serializer_class = ServerSerializer
     permission_classes = [IsAuthenticated]
@@ -152,12 +160,12 @@ class ServerViewSet(viewsets.ModelViewSet):
             pass
         return Response({"status": "action_sent"})
 
-class PaymentViewSet(viewsets.ModelViewSet):
+class PaymentViewSet(BulkDeleteMixin, viewsets.ModelViewSet):
     queryset = Payment.objects.all()
     serializer_class = PaymentSerializer
     permission_classes = [IsAdminUser]
 
-class TransactionViewSet(viewsets.ModelViewSet):
+class TransactionViewSet(BulkDeleteMixin, viewsets.ModelViewSet):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
     permission_classes = [IsAuthenticated]
@@ -167,7 +175,7 @@ class TransactionViewSet(viewsets.ModelViewSet):
             return Transaction.objects.none()
         return Transaction.objects.filter(user=self.request.user)
 
-class ManualPaymentRequestViewSet(viewsets.ModelViewSet):
+class ManualPaymentRequestViewSet(BulkDeleteMixin, viewsets.ModelViewSet):
     queryset = ManualPaymentRequest.objects.all()
     serializer_class = ManualPaymentRequestSerializer
     permission_classes = [IsAuthenticated]
@@ -197,7 +205,7 @@ class ManualPaymentRequestViewSet(viewsets.ModelViewSet):
         req.save()
         return Response({"status": "rejected"})
 
-class NotificationViewSet(viewsets.ModelViewSet):
+class NotificationViewSet(BulkDeleteMixin, viewsets.ModelViewSet):
     queryset = Notification.objects.all()
     serializer_class = NotificationSerializer
     permission_classes = [IsAuthenticated]
@@ -212,7 +220,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
         Notification.objects.filter(user=request.user, is_read=False).update(is_read=True)
         return Response({"status": "all_read"})
 
-class SystemSettingViewSet(viewsets.ModelViewSet):
+class SystemSettingViewSet(BulkDeleteMixin, viewsets.ModelViewSet):
     queryset = SystemSetting.objects.all()
     serializer_class = SystemSettingSerializer
     permission_classes = [IsAdminUser]
@@ -226,6 +234,29 @@ class SystemSettingViewSet(viewsets.ModelViewSet):
     def sync_rate(self, request):
         # Logic from old sync_exchange_rate...
         return Response({"status": "synced"})
+
+class AuthViewSet(viewsets.ViewSet):
+    permission_classes = [AllowAny]
+
+    @action(detail=False, methods=['post'], url_path='jwt/create', permission_classes=[AllowAny])
+    def jwt_create(self, request):
+        return custom_jwt_create(request)
+
+    @action(detail=False, methods=['get'], url_path='oauth/google', permission_classes=[AllowAny])
+    def google_oauth_start(self, request):
+        return google_oauth_start(request)
+
+    @action(detail=False, methods=['get'], url_path='oauth/google/callback', permission_classes=[AllowAny])
+    def google_oauth_callback(self, request):
+        return google_oauth_callback(request)
+
+    @action(detail=False, methods=['get'], url_path='oauth/github', permission_classes=[AllowAny])
+    def github_oauth_start(self, request):
+        return github_oauth_start(request)
+
+    @action(detail=False, methods=['get'], url_path='oauth/github/callback', permission_classes=[AllowAny])
+    def github_oauth_callback(self, request):
+        return github_oauth_callback(request)
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -243,6 +274,11 @@ def health_check(request):
         "status": "ok",
         "contabo_api": contabo_status,
     })
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def page_not_found(request):
+    return Response({"detail": "Page not found"}, status=404)
 
 @api_view(['GET'])
 @permission_classes([AllowAny])

@@ -10,9 +10,12 @@ router.register(r'v2/transactions', views.TransactionViewSet)
 router.register(r'v2/manual-requests', views.ManualPaymentRequestViewSet)
 router.register(r'v2/notifications', views.NotificationViewSet)
 router.register(r'v2/settings', views.SystemSettingViewSet)
+router.register(r'auth', views.AuthViewSet, basename='auth')
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('viewset/', include(router.urls)),
+    path('viewset/page-not-found/', views.page_not_found, name='page_not_found'),
     path('health/', views.health_check, name='health_check'),
     path('settings/', views.get_settings, name='get_settings'),
     path('settings/update/', views.update_setting, name='update_setting'),
