@@ -179,13 +179,17 @@ DJOSER = {
     'LOOKUP_FIELD': 'pk',
 }
 
-DOMAIN = os.environ.get('DOMAIN', 'tblinstance-github-io.onrender.com')
 SITE_NAME = 'TBLINC Cloud'
 
 # Absolute roots for URL generation (include scheme, no trailing slash)
 # Default to production endpoints but allow override via environment variables.
 BACKEND_ROOT = os.environ.get('BACKEND_ROOT', 'https://tblinstance-github-io.onrender.com').rstrip('/')
 FRONTEND_ROOT = os.environ.get('FRONTEND_ROOT', 'https://tblinstance.github.io').rstrip('/')
+
+# DOMAIN must be the FRONTEND host — Djoser uses it to build activation/password-reset email links
+# e.g. https://{DOMAIN}/activate/{uid}/{token} — this URL must open in the frontend SPA
+# Derived from FRONTEND_ROOT so it is always correct (strips scheme from the URL)
+DOMAIN = FRONTEND_ROOT.replace('https://', '').replace('http://', '')
 
 SIMPLE_JWT = {
    'AUTH_HEADER_TYPES': ('Bearer',),
