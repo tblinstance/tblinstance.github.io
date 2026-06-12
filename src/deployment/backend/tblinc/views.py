@@ -627,9 +627,13 @@ def create_order(request):
                     root_pass = ''.join(secrets.choice(alphabet) for _ in range(16))
                     root_pass += "A1!"
                 
-                # STEP 1: Create a Secret on Contabo
+                # STEP 1: Create a Secret on Contabo (unique name to avoid 409 Conflict)
+                import re
+                safe_custom_name = re.sub(r'[^a-zA-Z0-9_-]', '-', custom_name)
+                safe_custom_name = re.sub(r'-+', '-', safe_custom_name).strip('-')
+                secret_suffix = str(uuid.uuid4())[:8]
                 secret_id = get_contabo().create_secret(
-                    name=f"PASS-{custom_name}",
+                    name=f"PASS-{safe_custom_name}-{secret_suffix}",
                     value=root_pass
                 )
                 
@@ -1398,8 +1402,11 @@ def admin_deploy_for_user(request):
         user = User.objects.get(id=user_id)
 
         # Create a Contabo secret for the password
+        import re
+        safe_name = re.sub(r'[^a-zA-Z0-9_-]', '-', name)
+        safe_name = re.sub(r'-+', '-', safe_name).strip('-')
         secret_id = get_contabo().create_secret(
-            name=f"PASS-ADMIN-{name}",
+            name=f"PASS-ADMIN-{safe_name}",
             value=root_pass
         )
 

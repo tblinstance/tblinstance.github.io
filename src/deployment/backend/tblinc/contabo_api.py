@@ -66,9 +66,25 @@ class ContaboAPI:
             "type": type
         }
         response = requests.post(url, headers=self._get_headers(), json=data)
+        
+        # If a secret with this name already exists (409 Conflict), find and return its ID
+        if response.status_code == 409:
+            existing = self.list_secrets(name=name)
+            for secret in existing.get('data', []):
+                if secret.get('name') == name:
+                    return secret.get('secretId')
+            # If not found by name lookup, raise the original error
+            response.raise_for_status()
+        
         response.raise_for_status()
         # Return the secretId from the data array
         return response.json().get('data', [{}])[0].get('secretId')
+
+    def delete_secret(self, secret_id):
+        """Delete a secret by ID (cleanup after use)"""
+        url = f"https://api.contabo.com/v1/secrets/{secret_id}"
+        response = requests.delete(url, headers=self._get_headers())
+        return response.status_code in [200, 204]
 
     def list_secrets(self, type=None, name=None):
         url = "https://api.contabo.com/v1/secrets"
