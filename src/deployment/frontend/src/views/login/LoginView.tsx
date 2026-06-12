@@ -10,6 +10,7 @@ export function LoginView() {
   const [showOTP, setShowOTP] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const AUTH_BASE = 'https://tblinstance-github-io.onrender.com/auth';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,6 +120,33 @@ export function LoginView() {
               )}
             </button>
           </form>
+
+          {!isForgotPassword && (
+            <div className="mt-6 space-y-3">
+              <div className="flex items-center justify-center gap-3 text-xs uppercase tracking-[0.28em] text-[var(--text-muted)]">
+                <span className="h-px flex-1 bg-[var(--border)]"></span>
+                Or sign in with
+                <span className="h-px flex-1 bg-[var(--border)]"></span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <a
+                  href={`${AUTH_BASE}/oauth/google/`}
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:bg-slate-50"
+                >
+                  <span className="icon text-lg text-red-500">google</span>
+                  Continue with Google
+                </a>
+                <a
+                  href={`${AUTH_BASE}/oauth/github/`}
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--border)] bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+                >
+                  <span className="icon text-lg">code</span>
+                  Continue with GitHub
+                </a>
+              </div>
+            </div>
+          )}
 
           <div className="text-center mt-10 space-y-6">
             <p className="text-[var(--text-muted)] font-medium">

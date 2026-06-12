@@ -1,6 +1,7 @@
 import os
 import uuid
 import secrets
+from urllib.parse import urlencode
 from dotenv import load_dotenv
 load_dotenv()
 from decimal import Decimal
@@ -30,6 +31,7 @@ import io
 import base64
 from django.utils import timezone
 from datetime import timedelta
+import requests
 
 # Contabo Credentials (must be provided from environment variables)
 def require_env(key):
@@ -1712,6 +1714,175 @@ def custom_jwt_create(request):
         'refresh': str(refresh),
         'access': str(refresh.access_token),
     })
+
+def _build_oauth_callback_url(provider: str) -> str:
+    callback_path = f"/auth/oauth/{provider}/callback/"
+    if getattr(settings, 'BACKEND_ROOT', None):
+        return f"{settings.BACKEND_ROOT.rstrip('/')}{callback_path}"
+    return callback_path
+
+def _frontend_oauth_redirect_url(access_token: str, refresh_token: str, error: str | None = None) -> str:
+    base = getattr(settings, 'FRONTEND_ROOT', 'https://tblinstance.github.io').rstrip('/')
+    callback_path = getattr(settings, 'FRONTEND_OAUTH_CALLBACK_PATH', '/oauth/callback/')
+    url = f"{base}{callback_path}"
+    fragment_params = {'access': access_token, 'refresh': refresh_token} if access_token and refresh_token else {'error': error or 'oauth_failed'}
+    return f"{url}#{urlencode(fragment_params)}"
+
+def _find_or_create_social_user(email: str, first_name: str = '', last_name: str = ''):
+    if not email:
+        return None, 'Email address is required from the provider.'
+    user, created = User.objects.get_or_create(email=email.lower(), defaults={
+        'first_name': first_name or '',
+        'last_name': last_name or '',
+        'is_active': True,
+        'is_approved': True,
+    })
+    if created:
+        user.set_password(secrets.token_urlsafe(32))
+        user.save()
+    if not user.is_approved:
+        return None, 'Your account is pending approval. Please wait for an administrator to approve it.'
+    return user, None
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def google_oauth_start(request):
+    redirect_uri = _build_oauth_callback_url('google')
+    params = {
+        'client_id': settings.GOOGLE_OAUTH_CLIENT_ID,
+        'redirect_uri': redirect_uri,
+        'response_type': 'code',
+        'scope': 'openid email profile',
+        'access_type': 'online',
+        'prompt': 'select_account',
+    }
+    return redirect(f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}")
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def google_oauth_callback(request):
+    code = request.GET.get('code')
+    if not code:
+        return redirect(_frontend_oauth_redirect_url('', '', 'google_oauth_code_missing'))
+
+    redirect_uri = _build_oauth_callback_url('google')
+    token_res = requests.post(
+        'https://oauth2.googleapis.com/token',
+        data={
+            'code': code,
+            'client_id': settings.GOOGLE_OAUTH_CLIENT_ID,
+            'client_secret': settings.GOOGLE_OAUTH_CLIENT_SECRET,
+            'redirect_uri': redirect_uri,
+            'grant_type': 'authorization_code',
+        },
+        headers={'Content-Type': 'application/x-www-form-urlencoded'},
+        timeout=15,
+    )
+    token_data = token_res.json()
+    access_token = token_data.get('access_token')
+    if not access_token:
+        return redirect(_frontend_oauth_redirect_url('', '', 'google_token_exchange_failed'))
+
+    user_info = requests.get(
+        'https://www.googleapis.com/oauth2/v1/userinfo',
+        params={'access_token': access_token},
+        headers={'Accept': 'application/json'},
+        timeout=15,
+    ).json()
+    email = user_info.get('email')
+    verified_email = user_info.get('verified_email')
+    if not email or not verified_email:
+        return redirect(_frontend_oauth_redirect_url('', '', 'google_email_not_verified'))
+
+    first_name = user_info.get('given_name', '')
+    last_name = user_info.get('family_name', '')
+    user, error = _find_or_create_social_user(email, first_name, last_name)
+    if error or not user:
+        return redirect(_frontend_oauth_redirect_url('', '', error))
+
+    refresh = RefreshToken.for_user(user)
+    return redirect(_frontend_oauth_redirect_url(str(refresh.access_token), str(refresh), None))
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def github_oauth_start(request):
+    redirect_uri = _build_oauth_callback_url('github')
+    params = {
+        'client_id': settings.GITHUB_OAUTH_CLIENT_ID,
+        'redirect_uri': redirect_uri,
+        'scope': 'read:user user:email',
+        'allow_signup': 'true',
+    }
+    return redirect(f"https://github.com/login/oauth/authorize?{urlencode(params)}")
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def github_oauth_callback(request):
+    code = request.GET.get('code')
+    if not code:
+        return redirect(_frontend_oauth_redirect_url('', '', 'github_oauth_code_missing'))
+
+    redirect_uri = _build_oauth_callback_url('github')
+    token_res = requests.post(
+        'https://github.com/login/oauth/access_token',
+        data={
+            'client_id': settings.GITHUB_OAUTH_CLIENT_ID,
+            'client_secret': settings.GITHUB_OAUTH_CLIENT_SECRET,
+            'code': code,
+            'redirect_uri': redirect_uri,
+        },
+        headers={'Accept': 'application/json'},
+        timeout=15,
+    )
+    token_data = token_res.json()
+    access_token = token_data.get('access_token')
+    if not access_token:
+        return redirect(_frontend_oauth_redirect_url('', '', 'github_token_exchange_failed'))
+
+    user_info = requests.get(
+        'https://api.github.com/user',
+        headers={
+            'Authorization': f'token {access_token}',
+            'Accept': 'application/vnd.github+json',
+            'User-Agent': 'TBLINC',
+        },
+        timeout=15,
+    ).json()
+    email = user_info.get('email')
+    if not email:
+        emails_info = requests.get(
+            'https://api.github.com/user/emails',
+            headers={
+                'Authorization': f'token {access_token}',
+                'Accept': 'application/vnd.github+json',
+                'User-Agent': 'TBLINC',
+            },
+            timeout=15,
+        ).json()
+        if isinstance(emails_info, list):
+            primary = next((item for item in emails_info if item.get('primary') and item.get('verified')), None)
+            email = primary.get('email') if primary else None
+
+    if not email:
+        return redirect(_frontend_oauth_redirect_url('', '', 'github_email_not_available'))
+
+    name = user_info.get('name') or ''
+    first_name = ''
+    last_name = ''
+    if name:
+        parts = name.split()
+        if len(parts) == 1:
+            first_name = parts[0]
+        else:
+            first_name = parts[0]
+            last_name = ' '.join(parts[1:])
+
+    user, error = _find_or_create_social_user(email, first_name, last_name)
+    if error or not user:
+        return redirect(_frontend_oauth_redirect_url('', '', error))
+
+    refresh = RefreshToken.for_user(user)
+    return redirect(_frontend_oauth_redirect_url(str(refresh.access_token), str(refresh), None))
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])

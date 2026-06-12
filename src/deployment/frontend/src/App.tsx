@@ -41,6 +41,7 @@ import { CommunityView } from './views/community/CommunityView';
 import { StatusView } from './views/status/StatusView';
 import { LoginView } from './views/login/LoginView';
 import { SignupView } from './views/signup/SignupView';
+import { OAuthCallbackView } from './views/login/OAuthCallbackView';
 import { PublicNavbar } from './components/PublicNavbar';
 import { PublicSidebar } from './components/PublicSidebar';
 import { PublicFooter } from './components/PublicFooter';
@@ -96,6 +97,15 @@ function App() {
       <>
         <GlobalModals />
         <UserActivationView />
+      </>
+    );
+  }
+
+  if (window.location.pathname.startsWith('/oauth/callback')) {
+    return (
+      <>
+        <GlobalModals />
+        <OAuthCallbackView />
       </>
     );
   }

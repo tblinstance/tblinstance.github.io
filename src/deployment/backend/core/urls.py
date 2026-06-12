@@ -38,6 +38,10 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('tblinc.urls')),
     path('auth/jwt/create/', views.custom_jwt_create, name='custom_jwt_create'),
+    path('auth/oauth/google/', views.google_oauth_start, name='google_oauth_start'),
+    path('auth/oauth/google/callback/', views.google_oauth_callback, name='google_oauth_callback'),
+    path('auth/oauth/github/', views.github_oauth_start, name='github_oauth_start'),
+    path('auth/oauth/github/callback/', views.github_oauth_callback, name='github_oauth_callback'),
     path('auth/', include('djoser.urls')),
     path('auth/', include('djoser.urls.jwt')),
     # Swagger & ReDoc API Docs
