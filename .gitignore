@@ -7,3 +7,6 @@ __pycache__/
 backend/db.sqlite3
 .env
 backend/.env
+.vscode/
+.vite/
+node_modules/
