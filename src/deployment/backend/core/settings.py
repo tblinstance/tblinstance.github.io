@@ -174,7 +174,9 @@ DJOSER = {
     'SERIALIZERS': {
         'user_create': 'tblinc.serializers.CustomUserCreateSerializer',
         'user': 'djoser.serializers.UserSerializer',
+        'current_user': 'djoser.serializers.UserSerializer',
     },
+    'LOOKUP_FIELD': 'pk',
 }
 
 DOMAIN = os.environ.get('DOMAIN', 'tblinstance-github-io.onrender.com')
