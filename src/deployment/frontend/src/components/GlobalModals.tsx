@@ -115,7 +115,7 @@ export function GlobalModals() {
                     if (n.type === 'chat') {
                       setNotifyOpen(false);
                       if (isStaff) {
-                        setActiveTab('admin_dashboard');
+                        setActiveTab('support_center');
                         // Parse email from message "email: msg..."
                         const match = n.message.match(/^([^:]+):/);
                         if (match) {

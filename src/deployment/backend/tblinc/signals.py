@@ -3,6 +3,10 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.core.mail import send_mail
 from django.conf import settings
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 from django.urls import reverse
 from .models import User, Transaction, Server
 from django.utils.http import urlsafe_base64_encode

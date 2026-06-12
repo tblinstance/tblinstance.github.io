@@ -1456,6 +1456,21 @@ def admin_deploy_for_user(request):
     except Exception as e:
         return Response({"error": str(e)}, status=500)
 
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def admin_list_ssh_keys(request):
+    try:
+        secrets_data = get_contabo().list_secrets(type="ssh")
+        ssh_keys = []
+        for secret in secrets_data.get('data', []):
+            ssh_keys.append({
+                'id': secret.get('secretId'),
+                'name': secret.get('name'),
+            })
+        return Response(ssh_keys)
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
 @api_view(['POST'])
 @permission_classes([IsAdminUser])
 def admin_provision_network(request):

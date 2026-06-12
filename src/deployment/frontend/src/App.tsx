@@ -29,6 +29,7 @@ import { ActivityLogsPage } from './components/ActivityLogsPage';
 import { ApiDiagnosticsPage } from './components/ApiDiagnosticsPage';
 import { InfraMapPage } from './components/InfraMapPage';
 import { QuotasPage } from './components/QuotasPage';
+import { SupportDeskPage } from './components/SupportDeskPage';
 
 // Views
 import { LandingView } from './views/landing/LandingView';
@@ -243,21 +244,21 @@ function App() {
               <div className={`mt-8 ${sidebarOpen ? 'px-4' : 'px-0 text-center'}`}>
                 {sidebarOpen && <div className="text-[0.65rem] font-black text-[var(--text-muted)] uppercase tracking-[0.25em] mb-4">Advanced Server Control</div>}
                 {[
-                  { id: 'admin_dashboard', icon: 'monitoring', label: 'Dashboard' },
-                  { id: 'admin_permissions', icon: 'admin_panel_settings', label: 'Governance' },
-                  { id: 'admin_deploy', icon: 'cloud_upload', label: 'Direct Deploy' },
-                  { id: 'admin_networking', icon: 'lan', label: 'Net Provisioning' },
-                  { id: 'admin_storage', icon: 'storage', label: 'Disk Provisioning' },
-                  { id: 'admin_servers', icon: 'lan', label: 'All Servers' },
-                  { id: 'users', icon: 'manage_accounts', label: 'Users' },
-                  { id: 'support_center', icon: 'support_agent', label: 'Support Center' },
-                  { id: 'broadcast', icon: 'campaign', label: 'Global Broadcast' },
-                  { id: 'infra_map', icon: 'public', label: 'Infrastructure Map' },
+                  { id: 'admin_dashboard', icon: 'monitoring', label: 'System Overview' },
+                  { id: 'admin_permissions', icon: 'admin_panel_settings', label: 'Access Controls' },
+                  { id: 'admin_deploy', icon: 'cloud_upload', label: 'Instance Provisioner' },
+                  { id: 'admin_networking', icon: 'lan', label: 'VPC Provisioning' },
+                  { id: 'admin_storage', icon: 'storage', label: 'Volume Provisioning' },
+                  { id: 'admin_servers', icon: 'lan', label: 'Fleet Registry' },
+                  { id: 'users', icon: 'manage_accounts', label: 'User Directory' },
+                  { id: 'support_center', icon: 'support_agent', label: 'Support Desk' },
+                  { id: 'broadcast', icon: 'campaign', label: 'Global Announcements' },
+                  { id: 'infra_map', icon: 'public', label: 'Global Topology' },
                   { id: 'quotas', icon: 'leaderboard', label: 'Resource Quotas' },
-                  { id: 'api_diagnostics', icon: 'settings_input_component', label: 'API Diagnostics' },
-                  { id: 'system_settings', icon: 'settings_applications', label: 'Direct Access' },
-                  { id: 'activity_logs', icon: 'history_edu', label: 'Audit Ledger' },
-                  { id: 'django_admin', icon: 'admin_panel_settings', label: 'Django Core' },
+                  { id: 'api_diagnostics', icon: 'settings_input_component', label: 'API Health & Logs' },
+                  { id: 'system_settings', icon: 'settings_applications', label: 'System Variables' },
+                  { id: 'activity_logs', icon: 'history_edu', label: 'Audit Logs' },
+                  { id: 'django_admin', icon: 'admin_panel_settings', label: 'Django Admin Console' },
                 ].map((item) => (
                   <button
                     key={item.id}
@@ -267,8 +268,7 @@ function App() {
                         return;
                       }
                       if(item.id === 'support_center') {
-                        store.setAdminChatTargetId(-1);
-                        return;
+                        store.setAdminChatTargetId(null);
                       }
                       setActiveTab(item.id); 
                       if (isMobile) setSidebarOpen(false); 
@@ -297,7 +297,6 @@ function App() {
 
           {sidebarOpen && <div className="px-4 mt-6 mb-2 text-[0.6rem] font-black text-[var(--text-muted)] uppercase tracking-[0.2em] opacity-50">Personal</div>}
           {[
-            { id: 'account', icon: 'manage_accounts', label: 'Account' },
             { id: 'settings', icon: 'settings', label: 'Settings' },
           ].map(item => (
             <button
@@ -544,6 +543,7 @@ function App() {
           {activeTab === 'infra_map' && isStaff && <InfraMapPage stats={store.adminStats} />}
           {activeTab === 'quotas' && isStaff && <QuotasPage />}
           {activeTab === 'system_settings' && isStaff && <SystemSettingsPage token={token} showAlert={showAlert} />}
+          {activeTab === 'support_center' && isStaff && <SupportDeskPage />}
           {activeTab === 'activity_logs' && isStaff && <ActivityLogsPage />}
           {(activeTab === 'settings' || activeTab === 'account') && <SettingsPage email={email} isStaff={isStaff} profile_image={store.profile_image} two_factor_enabled={store.two_factor_enabled} exchangeRate={store.exchangeRate} onSyncRate={handleSyncRate} showConfirm={showConfirm} onImageUpload={store.uploadImage} generate2FA={store.generate2FA} enable2FA={store.enable2FA} disable2FA={store.disable2FA} />}
         </main>

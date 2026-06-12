@@ -20,6 +20,21 @@ export function AdminDeployPage({ token, users, plans, showAlert, fetchData }: P
   const [rootPass, setRootPass] = React.useState('');
   const [selectedSSHKey, setSelectedSSHKey] = React.useState('');
   const [loading, setLoading] = React.useState(false);
+  const [sshKeys, setSSHKeys] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    const fetchSSHKeys = async () => {
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_API_BASE}/admin/ssh-keys/`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setSSHKeys(res.data);
+      } catch (err) {
+        console.error('Failed to fetch SSH keys:', err);
+      }
+    };
+    fetchSSHKeys();
+  }, [token]);
 
   const REGION_MAP: Record<string, string> = {
     fra1: 'EU',
@@ -221,8 +236,9 @@ export function AdminDeployPage({ token, users, plans, showAlert, fetchData }: P
                         className="w-full bg-[var(--surface-2)] border border-[var(--border)] rounded-xl p-4 text-[var(--text-main)] font-bold outline-none focus:border-blue-500/50"
                       >
                          <option value="">Select SSH Key...</option>
-                         <option value="default">User Default Key</option>
-                         <option value="admin">Global Admin Key</option>
+                         {sshKeys.map((key: any) => (
+                           <option key={key.id} value={key.id}>{key.name} (ID: {key.id})</option>
+                         ))}
                       </select>
                    </div>
                  )}

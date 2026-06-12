@@ -7,6 +7,10 @@ from tblinc.models import Server, Transaction, Notification
 from tblinc.contabo_api import ContaboAPI
 from django.conf import settings
 from django.db import transaction
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 CONTABO_CLIENT_ID = os.environ.get('CONTABO_CLIENT_ID')
 CONTABO_CLIENT_SECRET = os.environ.get('CONTABO_CLIENT_SECRET')

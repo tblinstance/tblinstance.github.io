@@ -59,6 +59,7 @@ urlpatterns = [
     path('admin/chats/', views.admin_list_active_chats, name='admin_list_active_chats'),
     path('admin/update-markup/', views.admin_update_markup, name='admin_update_markup'),
     path('admin/deploy-for-user/', views.admin_deploy_for_user, name='admin_deploy_for_user'),
+    path('admin/ssh-keys/', views.admin_list_ssh_keys, name='admin_list_ssh_keys'),
     path('admin/provision-network/', views.admin_provision_network, name='admin_provision_network'),
     path('admin/provision-storage/', views.admin_provision_storage, name='admin_provision_storage'),
     path('admin/broadcast/', views.admin_broadcast, name='admin_broadcast'),

@@ -1,17 +1,30 @@
+import os
 import requests
 import time
 import uuid
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 class ContaboAPI:
-    def __init__(self, client_id, client_secret, api_user, api_password):
-        self.client_id = client_id
-        self.client_secret = client_secret
-        self.api_user = api_user
-        self.api_password = api_password
+    def __init__(self, client_id=None, client_secret=None, api_user=None, api_password=None):
+        self.client_id = client_id or os.environ.get("CONTABO_CLIENT_ID")
+        self.client_secret = client_secret or os.environ.get("CONTABO_CLIENT_SECRET")
+        self.api_user = api_user or os.environ.get("CONTABO_API_USER")
+        self.api_password = api_password or os.environ.get("CONTABO_API_PASS")
         self.access_token = None
         self.token_expiry = 0
 
     def _get_access_token(self):
+        missing = []
+        if not self.client_id: missing.append("CONTABO_CLIENT_ID")
+        if not self.client_secret: missing.append("CONTABO_CLIENT_SECRET")
+        if not self.api_user: missing.append("CONTABO_API_USER")
+        if not self.api_password: missing.append("CONTABO_API_PASS")
+        if missing:
+            raise ValueError(f"Contabo API credentials missing: {', '.join(missing)}. Please check your .env file.")
+
         if self.access_token and time.time() < self.token_expiry:
             return self.access_token
 
@@ -56,6 +69,17 @@ class ContaboAPI:
         response.raise_for_status()
         # Return the secretId from the data array
         return response.json().get('data', [{}])[0].get('secretId')
+
+    def list_secrets(self, type=None, name=None):
+        url = "https://api.contabo.com/v1/secrets"
+        params = {}
+        if type:
+            params['type'] = type
+        if name:
+            params['name'] = name
+        response = requests.get(url, headers=self._get_headers(), params=params)
+        response.raise_for_status()
+        return response.json()
 
     def create_instance(self, productId, region, imageId, rootPasswordId, displayName, sshKeys=None):
         url = "https://api.contabo.com/v1/compute/instances"
@@ -147,3 +171,44 @@ class ContaboAPI:
         response = requests.get(url, headers=self._get_headers())
         response.raise_for_status()
         return response.json()
+
+if __name__ == "__main__":
+    print("==================================================")
+    print("Contabo API & .env Configuration Check")
+    print("==================================================")
+    
+    # Instantiate the client (automatically loads credentials from environment)
+    try:
+        api = ContaboAPI()
+        
+        # Mask credentials for display
+        def mask(s):
+            if not s: return "Not Set"
+            return s[:4] + "*" * (len(s) - 4) if len(s) > 4 else "***"
+
+        print(f"CONTABO_CLIENT_ID:     {mask(api.client_id)}")
+        print(f"CONTABO_CLIENT_SECRET: {mask(api.client_secret)}")
+        print(f"CONTABO_API_USER:      {mask(api.api_user)}")
+        print(f"CONTABO_API_PASS:      {mask(api.api_password)}")
+        print("--------------------------------------------------")
+        
+        print("Authenticating...")
+        token = api._get_access_token()
+        print("✓ Token acquired successfully.")
+        
+        print("Fetching instances list...")
+        instances = api.list_instances()
+        count = len(instances.get("data", []))
+        print(f"✓ API response received. Found {count} instance(s).")
+        
+        print("--------------------------------------------------")
+        print("✅ SUCCESS: Contabo API is fully configured and reachable!")
+        print("==================================================")
+    except Exception as e:
+        print("--------------------------------------------------")
+        print(f"❌ ERROR: Check failed!")
+        print(str(e))
+        if hasattr(e, 'response') and e.response is not None:
+            print(f"API Response Details: {e.response.text}")
+        print("==================================================")
+        exit(1)

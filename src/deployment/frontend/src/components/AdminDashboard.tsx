@@ -171,7 +171,10 @@ export function AdminDashboard({ token, fetchData, showAlert, showPromptUI, manu
           <div className="text-[0.65rem] font-black text-[var(--text-muted)] uppercase tracking-[0.2em]">Pending Requests</div>
         </div>
 
-        <div className="card p-8 bg-[var(--surface)] border-[var(--border)] backdrop-blur-md group hover:border-violet-500/20 transition-all shadow-2xl cursor-pointer" onClick={() => store.setAdminChatTargetId(-1)}>
+        <div className="card p-8 bg-[var(--surface)] border-[var(--border)] backdrop-blur-md group hover:border-violet-500/20 transition-all shadow-2xl cursor-pointer" onClick={() => {
+          store.setActiveTab('support_center');
+          store.setAdminChatTargetId(null);
+        }}>
           <div className="w-12 h-12 rounded-xl bg-violet-500/10 text-violet-500 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform border border-violet-500/10">
             <span className="icon text-2xl">chat</span>
           </div>
