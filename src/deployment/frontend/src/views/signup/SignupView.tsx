@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import { useAppStore } from '../../store/AppStore';
 import type { AppState } from '../../store/types';
 import { useGeoLocation } from '@bigdatacloudapi/react-reverse-geocode-client';
+import { ActivateCheckEmailView } from './ActivateCheckEmailView';
 
 export function SignupView() {
   const { loading, register, setIsLogin, setShowAuth, isMobile, showAlert } = useAppStore() as AppState;
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -46,7 +49,23 @@ export function SignupView() {
       return;
     }
     await register(email, password, firstName, lastName, phoneNumber, address, country);
+    // Show email verification view after successful registration
+    setRegisteredEmail(email);
+    setRegistrationSuccess(true);
   };
+
+  // Show email verification view after successful registration
+  if (registrationSuccess) {
+    return (
+      <ActivateCheckEmailView
+        email={registeredEmail}
+        onBackToLogin={() => {
+          setRegistrationSuccess(false);
+          setIsLogin(true);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen flex bg-[var(--bg)] font-['Outfit'] animate-fade-in">

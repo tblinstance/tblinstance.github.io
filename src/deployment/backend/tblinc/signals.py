@@ -63,6 +63,37 @@ def send_admin_approval_email(sender, instance, created, **kwargs):
             )
 
 
+@receiver(post_save, sender=User)
+def send_activation_email(sender, instance, created, **kwargs):
+    """Send activation email to new users (since SEND_ACTIVATION_EMAIL is disabled in DJOSER)"""
+    if created:
+        try:
+            uid = urlsafe_base64_encode(force_bytes(instance.pk))
+            token = default_token_generator.make_token(instance)
+            
+            # Build activation link using frontend root
+            frontend_root = getattr(settings, 'FRONTEND_ROOT', 'https://tblinstance.github.io').rstrip('/')
+            activation_url = f"{frontend_root}/activate/{uid}/{token}/"
+            
+            send_mail(
+                subject='Activate Your TBLINC Cloud Account',
+                message=(
+                    f'Hi {instance.first_name or instance.email},\n\n'
+                    f'Thank you for registering with TBLINC Cloud! To complete your registration, '
+                    f'please click the link below to activate your account:\n\n'
+                    f'{activation_url}\n\n'
+                    f'This link will expire in 3 days.\n\n'
+                    f'If you did not register for this account, please ignore this email.\n\n'
+                    f'Best regards,\nTBLINC Cloud Team'
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[instance.email],
+                fail_silently=True,  # Never block registration due to SMTP issues
+            )
+        except Exception:
+            pass  # Never block registration due to SMTP issues
+
+
 @receiver(post_save, sender=Transaction)
 def send_transaction_email(sender, instance, created, **kwargs):
     if created:

@@ -239,10 +239,22 @@ if (userInfoRes.data.is_staff && (activeTab === 'users' || activeTab === 'admin_
       let msg = 'Registration failed. Please try again.';
       if (errData) {
         const messages: string[] = [];
-        Object.values(errData).forEach((val) => {
-          if (Array.isArray(val)) messages.push(...val.map(String));
-          else if (typeof val === 'string') messages.push(val);
+        // Metadata fields to exclude
+        const excludeFields = new Set(['url', 'id', 'success', 'status']);
+        // Valid error fields to check
+        const validErrorFields = new Set(['non_field_errors', 'detail', 'error', 'message', 'email', 'password', 're_password', 'phone_number', 'address', 'country', 'first_name', 'last_name']);
+        
+        // Extract errors only from known valid error fields
+        Object.entries(errData).forEach(([key, val]) => {
+          if (!excludeFields.has(key) && validErrorFields.has(key)) {
+            if (Array.isArray(val)) {
+              messages.push(...val.filter((v): v is string => typeof v === 'string' && v.trim().length > 0));
+            } else if (typeof val === 'string' && val.trim().length > 0) {
+              messages.push(val);
+            }
+          }
         });
+        
         if (messages.length > 0) msg = messages.join(' ');
       }
       showAlert('Error', msg);
