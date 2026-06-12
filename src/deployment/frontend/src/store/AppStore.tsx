@@ -222,7 +222,6 @@ if (userInfoRes.data.is_staff && (activeTab === 'users' || activeTab === 'admin_
       console.log("Registering user:", { email: em });
       const res = await axios.post(`${AUTH_BASE}/users/`, { 
         email: em, 
-        username: em, 
         password: pw, 
         re_password: pw,
         first_name,
@@ -232,11 +231,20 @@ if (userInfoRes.data.is_staff && (activeTab === 'users' || activeTab === 'admin_
         country
       });
       console.log("Registration success:", res.data);
-      showAlert('Success', 'Account created successfully! Please sign in.');
+      showAlert('Success', 'Account created! Please check your email inbox to activate your account, then sign in.');
       setIsLogin(true);
     } catch (err: any) {
       console.error("Registration error details:", err.response?.data);
-      const msg = err.response?.data ? Object.values(err.response.data).flat().join(' ') : 'Registration failed';
+      const errData = err.response?.data;
+      let msg = 'Registration failed. Please try again.';
+      if (errData) {
+        const messages: string[] = [];
+        Object.entries(errData).forEach(([key, val]) => {
+          if (Array.isArray(val)) messages.push(...val.map(String));
+          else if (typeof val === 'string') messages.push(val);
+        });
+        if (messages.length > 0) msg = messages.join(' ');
+      }
       showAlert('Error', msg);
     } finally { setLoading(false); }
   }, [showAlert, setIsLogin]);

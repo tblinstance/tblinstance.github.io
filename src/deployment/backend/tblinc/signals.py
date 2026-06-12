@@ -15,13 +15,31 @@ from django.contrib.auth.tokens import default_token_generator
 from .utils import send_sms
 
 @receiver(post_save, sender=User)
+def send_welcome_email(sender, instance, created, **kwargs):
+    """Send a welcome email when a new user registers. Always fail silently."""
+    if created:
+        try:
+            send_mail(
+                subject='Welcome to TBLINC Cloud!',
+                message=(
+                    f'Hi {instance.first_name or instance.email},\n\n'
+                    f'Welcome to TBLINC Cloud! Your account has been created successfully.\n\n'
+                    f'You can now log in at https://tblinstance.github.io/ using your email: {instance.email}\n\n'
+                    f'If you have any questions, please contact our support team.\n\n'
+                    f'Best regards,\nTBLINC Cloud Team'
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[instance.email],
+                fail_silently=True,  # Never block registration due to SMTP issues
+            )
+        except Exception:
+            pass  # Never block registration due to SMTP issues
+
+
+@receiver(post_save, sender=User)
 def send_admin_approval_email(sender, instance, created, **kwargs):
-    # Check if user just became active but is not yet approved
-    # Note: Djoser sets is_active=True upon activation
-    if instance.is_active and not instance.is_approved:
-        # Avoid double sending if already sent (could use a flag on model if needed)
-        # For now, we'll just send it. 
-        
+    # Notify admin when a new user registers
+    if created and not instance.is_approved:
         uid = urlsafe_base64_encode(force_bytes(instance.pk))
         token = default_token_generator.make_token(instance)
         
@@ -29,22 +47,20 @@ def send_admin_approval_email(sender, instance, created, **kwargs):
         if backend_root:
             backend_root = backend_root.rstrip('/')
         else:
-            # fallback to DOMAIN (may not include scheme)
             domain = getattr(settings, 'DOMAIN', 'localhost:8000')
             backend_root = f"http://{domain}".rstrip('/')
 
-        # We'll use a backend link for direct approval from email
         approval_url = f"{backend_root}/api/admin/approve-link/{uid}/{token}/"
         
-        admin_email = os.environ.get('EMAIL_HOST_USER') # Sending to the same email for now
-        
-        send_mail(
-            subject=f'Approval Required: {instance.email}',
-            message=f'A new user has verified their email and requires approval.\n\nUser: {instance.email}\nJoined: {instance.date_joined}\n\nClick the link below to approve this user:\n{approval_url}',
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[admin_email],
-            fail_silently=True,
-        )
+        admin_email = os.environ.get('EMAIL_HOST_USER')
+        if admin_email:
+            send_mail(
+                subject=f'New User Registration: {instance.email}',
+                message=f'A new user has registered and requires approval.\n\nUser: {instance.email}\nJoined: {instance.date_joined}\n\nApprove here:\n{approval_url}',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[admin_email],
+                fail_silently=True,  # Never block registration due to SMTP issues
+            )
 
 
 @receiver(post_save, sender=Transaction)
