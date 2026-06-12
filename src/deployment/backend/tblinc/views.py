@@ -1527,7 +1527,17 @@ def admin_send_test_email(request):
     email = request.data.get('email')
     if not email:
         return Response({"error": "Target email required"}, status=400)
-    return Response({"message": f"Diagnostic signal sent to {email}"})
+    try:
+        send_mail(
+            subject='SMTP Diagnostic Test - TBLINC',
+            message='This is a diagnostic test email to verify your SMTP configuration.',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+            fail_silently=False,
+        )
+        return Response({"message": f"Diagnostic signal sent to {email}"})
+    except Exception as e:
+        return Response({"error": f"Failed to send email: {str(e)}"}, status=500)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])

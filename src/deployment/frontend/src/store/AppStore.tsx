@@ -239,7 +239,7 @@ if (userInfoRes.data.is_staff && (activeTab === 'users' || activeTab === 'admin_
       let msg = 'Registration failed. Please try again.';
       if (errData) {
         const messages: string[] = [];
-        Object.entries(errData).forEach(([key, val]) => {
+        Object.values(errData).forEach((val) => {
           if (Array.isArray(val)) messages.push(...val.map(String));
           else if (typeof val === 'string') messages.push(val);
         });
