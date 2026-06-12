@@ -904,8 +904,9 @@ def server_control(request, server_id):
             image_id = normalize_contabo_image(request.data.get('imageId', 'ubuntu-22.04')) # Default
             new_pass = request.data.get('password', 'DefaultPass123!')
             
-            # Create a secret for the new password
-            pass_id = get_contabo().create_secret(f"rebuild-{server.id}", new_pass)
+            # Create a secret for the new password (unique suffix avoids 409 Conflict)
+            _rebuild_suffix = str(uuid.uuid4())[:8]
+            pass_id = get_contabo().create_secret(f"rebuild-{server.id}-{_rebuild_suffix}", new_pass)
             success = get_contabo().reinstall_instance(server.contabo_id, image_id, pass_id)
         else:
             success = get_contabo().control_instance(server.contabo_id, action)
@@ -1145,9 +1146,10 @@ def payment_success(request):
             root_pass = ''.join(secrets.choice(string.ascii_letters + string.digits + "!@#$") for _ in range(16))
             root_pass += "A1!"  # Ensure complexity
 
-            # STEP 1: Create a Contabo secret for the password
+            # STEP 1: Create a Contabo secret for the password (unique suffix avoids 409 Conflict)
+            _webhook_suffix = str(uuid.uuid4())[:8]
             secret_id = get_contabo().create_secret(
-                name=f"PASS-TBLINC-{payment.plan_id}-{payment.user.id}",
+                name=f"PASS-TBLINC-{payment.plan_id}-{payment.user.id}-{_webhook_suffix}",
                 value=root_pass
             )
 
@@ -1401,12 +1403,13 @@ def admin_deploy_for_user(request):
     try:
         user = User.objects.get(id=user_id)
 
-        # Create a Contabo secret for the password
+        # Create a Contabo secret for the password (unique suffix avoids 409 Conflict)
         import re
         safe_name = re.sub(r'[^a-zA-Z0-9_-]', '-', name)
         safe_name = re.sub(r'-+', '-', safe_name).strip('-')
+        _admin_suffix = str(uuid.uuid4())[:8]
         secret_id = get_contabo().create_secret(
-            name=f"PASS-ADMIN-{safe_name}",
+            name=f"PASS-ADMIN-{safe_name}-{_admin_suffix}",
             value=root_pass
         )
 
