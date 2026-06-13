@@ -1,4 +1,3 @@
 User-agent: *
 Allow: /
-
 Sitemap: https://tblinstance.github.io/sitemap.xml
